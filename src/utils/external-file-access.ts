@@ -9,6 +9,7 @@ import { isDesktop, isMobile, hasNodeJs, getNodeModules } from './platform.js';
 export interface ExternalFileInfo {
     fileName: string;
     filePath: string;
+    relativePath: string;  // Relative path from source folder (e.g., "subfolder/file.note" or "file.note")
     lastModified: number;
     fileSize: number;
 }
@@ -48,39 +49,126 @@ class DesktopFileAccess implements FileAccessImpl {
     async scanDirectory(folderPath: string): Promise<ExternalFileInfo[]> {
         this.ensureInitialized();
 
+        console.log('🔍 scanDirectory called with:', folderPath);
+
         try {
-            const files: ExternalFileInfo[] = [];
-            const entries = this.fs!.readdirSync(folderPath, { withFileTypes: true });
+            // Normalize the path - handle trailing slashes, spaces, etc.
+            const normalizedPath = this.normalizePath(folderPath);
+            console.log('📁 Normalized path:', normalizedPath);
 
-            for (const entry of entries) {
-                // Skip directories and hidden files
-                if (entry.isDirectory() || entry.name.startsWith('.')) {
-                    continue;
+            // Verify the path exists and is a directory
+            try {
+                const stats = this.fs!.statSync(normalizedPath);
+                console.log('📊 Path stats:', { isDirectory: stats.isDirectory(), exists: true });
+                if (!stats.isDirectory()) {
+                    throw new Error(`Path is not a directory: ${normalizedPath}`);
                 }
-
-                // Only process .note and .zip files
-                if (!entry.name.endsWith('.note') && !entry.name.endsWith('.zip')) {
-                    continue;
-                }
-
-                const fullPath = this.path!.join(folderPath, entry.name);
-                try {
-                    const stats = this.fs!.statSync(fullPath);
-                    files.push({
-                        fileName: entry.name,
-                        filePath: fullPath,
-                        lastModified: stats.mtimeMs,
-                        fileSize: stats.size
-                    });
-                } catch (statError) {
-                    console.warn(`Could not stat file ${fullPath}:`, statError);
-                }
+            } catch (pathError) {
+                console.error('❌ Path validation failed:', pathError);
+                throw new Error(`Cannot access directory: ${normalizedPath}. ${pathError instanceof Error ? pathError.message : 'Unknown error'}`);
             }
 
+            const files: ExternalFileInfo[] = [];
+            await this.scanDirectoryRecursive(normalizedPath, normalizedPath, files);
+            console.log(`✅ Found ${files.length} .note files`);
             return files;
         } catch (error) {
-            console.error('Error scanning directory:', error);
+            console.error('❌ Error scanning directory:', error);
             throw new Error(`Failed to scan directory: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    /**
+     * Normalize file path for cross-platform compatibility
+     */
+    private normalizePath(inputPath: string): string {
+        console.log('🔧 Normalizing path:', inputPath);
+
+        // Remove trailing slashes
+        let normalized = inputPath.replace(/[\/\\]+$/, '');
+
+        // Use path.normalize to handle . and .., and convert separators
+        normalized = this.path!.normalize(normalized);
+
+        console.log('✨ Normalized result:', normalized);
+        return normalized;
+    }
+
+    /**
+     * Test if a path is accessible (for debugging)
+     */
+    async testPathAccess(testPath: string): Promise<{ accessible: boolean; error?: string; type?: string }> {
+        this.ensureInitialized();
+
+        try {
+            const normalized = this.normalizePath(testPath);
+            const stats = this.fs!.statSync(normalized);
+            return {
+                accessible: true,
+                type: stats.isDirectory() ? 'directory' : 'file'
+            };
+        } catch (error: any) {
+            return {
+                accessible: false,
+                error: error.message || String(error)
+            };
+        }
+    }
+
+    /**
+     * Recursively scan directory for .note files
+     */
+    private async scanDirectoryRecursive(
+        currentPath: string,
+        rootPath: string,
+        files: ExternalFileInfo[]
+    ): Promise<void> {
+        let entries: any[];
+        try {
+            entries = this.fs!.readdirSync(currentPath, { withFileTypes: true });
+        } catch (readError) {
+            console.warn(`Cannot read directory ${currentPath}, skipping:`, readError);
+            return; // Skip this directory if we can't read it
+        }
+
+        for (const entry of entries) {
+            try {
+                // Skip hidden files and system files
+                if (entry.name.startsWith('.')) {
+                    continue;
+                }
+
+                // Use path.join for proper path construction
+                const fullPath = this.path!.join(currentPath, entry.name);
+
+                if (entry.isDirectory()) {
+                    // Recursively scan subdirectory
+                    await this.scanDirectoryRecursive(fullPath, rootPath, files);
+                } else if (entry.isFile()) {
+                    // Only process .note and .zip files
+                    if (!entry.name.endsWith('.note') && !entry.name.endsWith('.zip')) {
+                        continue;
+                    }
+
+                    try {
+                        const stats = this.fs!.statSync(fullPath);
+                        // Calculate relative path from root folder
+                        const relativePath = this.path!.relative(rootPath, fullPath);
+
+                        files.push({
+                            fileName: entry.name,
+                            filePath: fullPath,
+                            relativePath: relativePath.replace(/\\/g, '/'), // Normalize to forward slashes
+                            lastModified: stats.mtimeMs,
+                            fileSize: stats.size
+                        });
+                    } catch (statError) {
+                        console.warn(`Could not stat file ${fullPath}:`, statError);
+                    }
+                }
+            } catch (entryError) {
+                console.warn(`Error processing entry ${entry.name}:`, entryError);
+            }
         }
     }
 
@@ -88,7 +176,8 @@ class DesktopFileAccess implements FileAccessImpl {
         this.ensureInitialized();
 
         try {
-            const buffer = this.fs!.readFileSync(filePath);
+            const normalizedPath = this.normalizePath(filePath);
+            const buffer = this.fs!.readFileSync(normalizedPath);
             return new Blob([buffer]);
         } catch (error) {
             console.error('Error reading file:', error);
@@ -100,7 +189,8 @@ class DesktopFileAccess implements FileAccessImpl {
         this.ensureInitialized();
 
         try {
-            const stats = this.fs!.statSync(folderPath);
+            const normalizedPath = this.normalizePath(folderPath);
+            const stats = this.fs!.statSync(normalizedPath);
             return stats.isDirectory();
         } catch {
             return false;
@@ -158,6 +248,7 @@ class MobileFileAccess implements FileAccessImpl {
                     files.push({
                         fileName: entry.name,
                         filePath: entry.name, // Mobile: relative name is enough
+                        relativePath: entry.name, // For mobile, same as filename
                         lastModified: file.lastModified,
                         fileSize: file.size
                     });

@@ -30,28 +30,49 @@ export class OneToOneImporter {
 
     /**
      * Import a note file as a single markdown document
+     * @param book - The book data to import
+     * @param relativePath - Relative path from source folder (e.g., "subfolder/file.note" or "file.note")
      */
-    async importNote(book: BookResult): Promise<ImportResult> {
+    async importNote(book: BookResult, relativePath?: string): Promise<ImportResult> {
         try {
-            // Create attachments folder
-            const attachmentsFolder = '_attachments';
-            await ensureFolder(this.app, `${this.settings.notesFolder}/${attachmentsFolder}`);
+            // Determine the target folder structure based on relative path
+            // e.g., "subfolder/file.note" -> "subfolder"
+            // e.g., "file.note" -> "" (root of notes folder)
+            const relativeDir = relativePath
+                ? relativePath.substring(0, relativePath.lastIndexOf('/') + 1).replace(/\.note$|\.zip$/, '')
+                : '';
 
-            // Save all attachments and get their filenames
-            const attachments = await this.saveAttachments(book, attachmentsFolder);
+            // Create the target folder structure
+            const targetFolder = relativeDir
+                ? `${this.settings.notesFolder}/${relativeDir}`.replace(/\/$/, '')
+                : this.settings.notesFolder;
 
-            // Build the single markdown content
+            await ensureFolder(this.app, targetFolder);
+
+            // Get Obsidian's configured attachment folder path
+            // The attachment folder is relative to vault root
+            const attachmentConfig = (this.app.vault as any).config?.attachmentFolderPath;
+            const attachmentFolder = attachmentConfig || this.settings.notesFolder;
+
+            // Save all attachments and get their filenames with relative paths
+            const attachments = await this.saveAttachments(book, attachmentFolder, relativeDir);
+
+            // Build the single markdown content with proper relative attachment paths
             const markdown = this.buildSingleMarkdown(book, attachments);
 
             // Save the markdown file
             const filename = `${book.bookName}.md`;
-            await this.saveMarkdown(markdown, filename);
+            // targetFolder already includes relativeDir structure, pass just filename
+            await this.saveMarkdown(markdown, filename, targetFolder);
+
+            // Build the full path for the return value (for display/logging)
+            const fullPath = `${targetFolder}/${filename}`.replace(/\/\//g, '/');
 
             return {
                 success: true,
-                filename,
+                filename: fullPath,
                 pagesImported: book.pages.length,
-                attachments
+                attachments: attachments.map(a => a.filename)
             };
         } catch (error: any) {
             console.error('Error importing note:', error);
@@ -68,7 +89,10 @@ export class OneToOneImporter {
     /**
      * Build a single markdown file with all pages
      */
-    private buildSingleMarkdown(book: BookResult, attachments: string[]): string {
+    private buildSingleMarkdown(
+        book: BookResult,
+        attachments: Array<{ filename: string; relativePath: string }>
+    ): string {
         const lines: string[] = [];
 
         // Frontmatter
@@ -104,18 +128,19 @@ export class OneToOneImporter {
             lines.push('');
 
             // Find the attachment for this page
-            const pageImage = attachments.find(a => a.includes(`_page_${page.pageNum}.`));
+            const pageImage = attachments.find(a => a.filename.includes(`_page_${page.pageNum}.`));
             if (pageImage) {
-                lines.push(`![Page ${page.pageNum}](attachments/${pageImage})`);
+                // Use relative path for the image link
+                lines.push(`![Page ${page.pageNum}](${pageImage.relativePath})`);
                 lines.push('');
             }
 
             // Audio link if present
             if (page.audio) {
                 const audioBaseName = page.audio.originalName.split('.')[0];
-                const audioFile = attachments.find(a => a.includes(audioBaseName));
+                const audioFile = attachments.find(a => a.filename.includes(audioBaseName));
                 if (audioFile) {
-                    lines.push(`🎵 [[attachments/${audioFile}]]`);
+                    lines.push(`🎵 [[${audioFile.relativePath}]]`);
                     lines.push('');
                 }
             }
@@ -128,20 +153,31 @@ export class OneToOneImporter {
     }
 
     /**
-     * Save all attachments (images and audio) to the _attachments folder
+     * Save all attachments to Obsidian's attachment folder
+     * @param book - The book data
+     * @param attachmentFolder - Obsidian's configured attachment folder
+     * @param relativeDir - Relative directory for unique naming (e.g., "folder1/" or "")
      */
-    private async saveAttachments(book: BookResult, attachmentsFolder: string): Promise<string[]> {
-        const savedFiles: string[] = [];
+    private async saveAttachments(
+        book: BookResult,
+        attachmentFolder: string,
+        relativeDir: string
+    ): Promise<Array<{ filename: string; relativePath: string }>> {
+        const savedFiles: Array<{ filename: string; relativePath: string }> = [];
+
+        // Sanitize relative directory for filename (remove slashes, replace with underscore)
+        const dirPrefix = relativeDir.replace(/\/+/g, '_').replace(/^_+|_+$/g, '');
+        const namePrefix = dirPrefix ? `viwoods_${dirPrefix}_${book.bookName}` : `viwoods_${book.bookName}`;
 
         // Save images
         for (const page of book.pages) {
             const ext = this.settings.outputFormat === 'svg' ? 'svg' : 'png';
-            const filename = `${book.bookName}_page_${page.pageNum}.${ext}`;
-            const filepath = `${this.settings.notesFolder}/${attachmentsFolder}/${filename}`;
+            const filename = `${namePrefix}_page_${page.pageNum}.${ext}`;
+            const filepath = `${attachmentFolder}/${filename}`;
 
             try {
                 // Create folder if it doesn't exist
-                await ensureFolder(this.app, `${this.settings.notesFolder}/${attachmentsFolder}`);
+                await ensureFolder(this.app, attachmentFolder);
 
                 // Convert blob to buffer
                 const buffer = await page.image.blob.arrayBuffer();
@@ -155,7 +191,7 @@ export class OneToOneImporter {
                 } else {
                     await this.app.vault.createBinary(filepath, uint8Array);
                 }
-                savedFiles.push(filename);
+                savedFiles.push({ filename, relativePath: this.calculateRelativePath(filename) });
             } catch (error) {
                 console.error(`Failed to save attachment ${filename}:`, error);
             }
@@ -164,8 +200,8 @@ export class OneToOneImporter {
         // Save audio files
         for (const page of book.pages) {
             if (page.audio) {
-                const filename = page.audio.originalName;
-                const filepath = `${this.settings.notesFolder}/${attachmentsFolder}/${filename}`;
+                const filename = `${namePrefix}_${page.audio.originalName}`;
+                const filepath = `${attachmentFolder}/${filename}`;
 
                 try {
                     const buffer = await page.audio.blob.arrayBuffer();
@@ -177,7 +213,7 @@ export class OneToOneImporter {
                     } else {
                         await this.app.vault.createBinary(filepath, uint8Array);
                     }
-                    savedFiles.push(filename);
+                    savedFiles.push({ filename, relativePath: this.calculateRelativePath(filename) });
                 } catch (error) {
                     console.error(`Failed to save audio ${filename}:`, error);
                 }
@@ -188,10 +224,23 @@ export class OneToOneImporter {
     }
 
     /**
-     * Save the markdown file
+     * Calculate the relative path from a markdown file location to an attachment
+     * Obsidian will handle this, but we return just the attachment filename for the link
      */
-    private async saveMarkdown(content: string, filename: string): Promise<void> {
-        const filepath = `${this.settings.notesFolder}/${filename}`;
+    private calculateRelativePath(filename: string): string {
+        // Obsidian automatically resolves attachment paths from configured folder
+        // We return just the filename, Obsidian will handle the path resolution
+        return filename;
+    }
+
+    /**
+     * Save the markdown file
+     * @param content - Markdown content
+     * @param filename - Just the filename (e.g., "subfolder/file.md" or "file.md")
+     * @param targetFolder - Target folder path (e.g., "Viwoods Notes/subfolder" or "Viwoods Notes")
+     */
+    private async saveMarkdown(content: string, filename: string, targetFolder: string): Promise<void> {
+        const filepath = `${targetFolder}/${filename}`.replace(/\/\//g, '/');
         await this.app.vault.create(filepath, content);
     }
 
