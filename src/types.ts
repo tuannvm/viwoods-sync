@@ -129,6 +129,7 @@ export interface WatcherStateData {
 export interface DetectedChange {
     fileName: string;
     filePath: string;
+    relativePath: string;  // Relative path from source folder
     changeType: 'new' | 'modified';
     lastModified: number;
     estimatedPages?: number;

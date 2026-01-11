@@ -152,9 +152,10 @@ export class ImportWorkflow {
     /**
      * Auto-import a note file using simplified one-to-one mode (skips modal dialogs)
      * @param file - File object to import
+     * @param relativePath - Relative path from source folder (for folder structure)
      * @returns Import result
      */
-    async processNoteFileAuto(file: File): Promise<{ success: boolean; filename: string; pagesImported: number }> {
+    async processNoteFileAuto(file: File, relativePath?: string): Promise<{ success: boolean; filename: string; pagesImported: number }> {
         if (this.importInProgress) {
             console.warn('Import already in progress');
             return { success: false, filename: file.name, pagesImported: 0 };
@@ -174,7 +175,7 @@ export class ImportWorkflow {
 
             // Use OneToOneImporter for simplified import
             const oneToOneImporter = new OneToOneImporter(this.app, this.settings);
-            const result = await oneToOneImporter.importNote(bookResult);
+            const result = await oneToOneImporter.importNote(bookResult, relativePath);
 
             if (result.success) {
                 console.log(`Auto-imported ${result.filename} with ${result.pagesImported} pages`);
@@ -196,9 +197,10 @@ export class ImportWorkflow {
     /**
      * Auto-import a note file from an external file path (for auto-sync)
      * @param filePath - Absolute path to the .note file
+     * @param relativePath - Relative path from source folder (for folder structure)
      * @returns Import result
      */
-    async processNoteFromPathAuto(filePath: string): Promise<{ success: boolean; filename: string; pagesImported: number }> {
+    async processNoteFromPathAuto(filePath: string, relativePath?: string): Promise<{ success: boolean; filename: string; pagesImported: number }> {
         if (this.importInProgress) {
             console.warn('Import already in progress');
             return { success: false, filename: filePath, pagesImported: 0 };
@@ -217,8 +219,8 @@ export class ImportWorkflow {
                 type: 'application/zip'
             });
 
-            // Use auto-import method
-            return await this.processNoteFileAuto(file);
+            // Use auto-import method with relative path
+            return await this.processNoteFileAuto(file, relativePath);
         } catch (error: any) {
             console.error('Error importing from path:', error);
             return { success: false, filename: filePath, pagesImported: 0 };

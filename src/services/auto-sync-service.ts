@@ -12,7 +12,7 @@ import { WATCHER_STATE_FILE } from '../utils/constants.js';
 // Forward declaration to avoid circular dependency
 export interface IImportWorkflow {
     processNoteFromPath(filePath: string): Promise<void>;
-    processNoteFromPathAuto(filePath: string): Promise<{ success: boolean; filename: string; pagesImported: number }>;
+    processNoteFromPathAuto(filePath: string, relativePath?: string): Promise<{ success: boolean; filename: string; pagesImported: number }>;
     getImportInProgress(): boolean;
 }
 
@@ -208,19 +208,21 @@ export class AutoSyncService {
                 changes.push({
                     fileName: file.fileName,
                     filePath: file.filePath,
+                    relativePath: file.relativePath,
                     changeType: 'new',
                     lastModified: file.lastModified
                 });
-                console.log(`New file detected: ${file.fileName}`);
+                console.log(`New file detected: ${file.relativePath}`);
             } else if (file.lastModified > (knownFile.lastImported || 0)) {
                 // Modified file
                 changes.push({
                     fileName: file.fileName,
                     filePath: file.filePath,
+                    relativePath: file.relativePath,
                     changeType: 'modified',
                     lastModified: file.lastModified
                 });
-                console.log(`Modified file detected: ${file.fileName}`);
+                console.log(`Modified file detected: ${file.relativePath}`);
             }
         }
 
@@ -277,7 +279,7 @@ export class AutoSyncService {
         for (const change of this.detectedChanges) {
             try {
                 // Use auto-import mode (skips modal dialogs, uses one-to-one import)
-                const result = await this.importWorkflow.processNoteFromPathAuto(change.filePath);
+                const result = await this.importWorkflow.processNoteFromPathAuto(change.filePath, change.relativePath);
 
                 if (result.success) {
                     // Mark as imported
