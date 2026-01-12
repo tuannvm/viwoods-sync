@@ -53,11 +53,6 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
-      - name: Create release commit
-        run: |
-          # Create commit with bump type indicator for anotherNick/github-tag-action to detect
-          git commit --allow-empty -m "chore: release #${{ github.event.inputs.bump_type }}"
-
       - name: Bump version and create tag
         id: tag
         uses: anothrNick/github-tag-action@v1
@@ -91,6 +86,16 @@ jobs:
           # Commit the changes
           git add manifest.json versions.json
           git commit -m "chore: bump version to $NEW_VERSION"
+
+      - name: Move tag to updated commit
+        run: |
+          TAG="${{ steps.tag.outputs.new_tag }}"
+          echo "Moving tag $TAG to the current HEAD (with updated manifest.json)"
+          git tag -f $TAG
+          git push origin $TAG --force
+
+      - name: Push changes
+        run: |
           git push origin HEAD
 
       - name: Generate changelog
