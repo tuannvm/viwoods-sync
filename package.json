@@ -31,19 +31,19 @@
 		"@typescript-eslint/eslint-plugin": "^8.35.1",
 		"@typescript-eslint/parser": "^8.35.1",
 		"@typescript-eslint/utils": "^8.35.1",
-		"@vitest/ui": "^1.6.0",
-		"builtin-modules": "^3.3.0",
-		"esbuild": "^0.25.5",
+		"@vitest/ui": "^4.0.17",
+		"builtin-modules": "^5.0.0",
+		"esbuild": "^0.27.2",
 		"eslint": "^9.18.0",
 		"eslint-plugin-obsidianmd": "^0.1.9",
-		"globals": "^14.0.0",
+		"globals": "^17.0.0",
 		"jiti": "^2.6.1",
 		"obsidian": "latest",
 		"tslib": "^2.4.0",
 		"typescript": "^5.8.3",
 		"typescript-eslint": "^8.35.1",
-		"vite-tsconfig-paths": "^4.2.1",
-		"vitest": "^1.6.0"
+		"vite-tsconfig-paths": "^6.0.4",
+		"vitest": "^4.0.17"
 	},
 	"overrides": {
 		"eslint": "^9.18.0"
