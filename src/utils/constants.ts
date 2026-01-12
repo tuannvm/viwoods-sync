@@ -1,4 +1,4 @@
-// constants.ts - Constants and default settings for Viwoods Notes Importer Plugin
+// constants.ts - Constants and default settings for Viwoods Obsidian Plugin
 
 import { ViwoodsSettings } from '../types.js';
 

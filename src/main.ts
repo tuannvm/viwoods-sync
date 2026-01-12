@@ -1,4 +1,4 @@
-// main.ts - Viwoods Notes Importer Plugin for Obsidian
+// main.ts - Viwoods Obsidian Plugin for Obsidian
 // Minimal plugin class with lifecycle management only
 
 import {

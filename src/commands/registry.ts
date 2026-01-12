@@ -1,4 +1,4 @@
-// commands/registry.ts - Centralized command registration for Viwoods Notes Importer
+// commands/registry.ts - Centralized command registration for Viwoods Obsidian
 
 import { Plugin, Notice, MarkdownView, App } from 'obsidian';
 import type { ViwoodsSettings, PenMappings } from '../types.js';

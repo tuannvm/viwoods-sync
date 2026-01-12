@@ -1,4 +1,4 @@
-// file-utils.ts - File utility functions for Viwoods Notes Importer Plugin
+// file-utils.ts - File utility functions for Viwoods Obsidian Plugin
 
 import { App, TFile, TFolder, normalizePath } from 'obsidian';
 import { ImportManifest, PageChange, ImportSummary, ViwoodsSettings, BookResult } from '../types.js';

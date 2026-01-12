@@ -1,4 +1,4 @@
-// importer-service.ts - Core import business logic for Viwoods Notes Importer Plugin
+// importer-service.ts - Core import business logic for Viwoods Obsidian Plugin
 
 import { App } from 'obsidian';
 import type {

@@ -1,4 +1,4 @@
-// utils/platform.ts - Platform detection utilities for Viwoods Notes Importer
+// utils/platform.ts - Platform detection utilities for Viwoods Obsidian
 
 /**
  * Get the current platform type

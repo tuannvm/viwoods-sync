@@ -1,4 +1,4 @@
-// pdf-generator.ts - PDF generation utilities for Viwoods Notes Importer Plugin
+// pdf-generator.ts - PDF generation utilities for Viwoods Obsidian Plugin
 
 import { App, TFile, normalizePath, Notice } from 'obsidian';
 import { smoothPoints } from './svg-generator.js';

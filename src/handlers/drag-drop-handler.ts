@@ -1,4 +1,4 @@
-// handlers/drag-drop-handler.ts - Drag and drop file handling for Viwoods Notes Importer
+// handlers/drag-drop-handler.ts - Drag and drop file handling for Viwoods Obsidian
 
 export type NoteFileProcessor = (file: File) => Promise<void>;
 

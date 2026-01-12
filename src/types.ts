@@ -1,4 +1,4 @@
-// types.ts - Type definitions for Viwoods Notes Importer Plugin
+// types.ts - Type definitions for Viwoods Obsidian Plugin
 
 export interface ImportManifest {
     bookName: string;

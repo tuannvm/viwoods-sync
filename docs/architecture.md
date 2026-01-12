@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Viwoods Notes Importer is an Obsidian plugin that processes Viwoods `.note` files and converts them into Obsidian-compatible formats (Markdown, SVG, PNG, MP3, PDF).
+The Viwoods Obsidian is an Obsidian plugin that processes Viwoods `.note` files and converts them into Obsidian-compatible formats (Markdown, SVG, PNG, MP3, PDF).
 
 ## Plugin Structure
 

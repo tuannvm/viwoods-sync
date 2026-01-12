@@ -1,4 +1,4 @@
-// pen-mappings.ts - Pen mapping utilities for Viwoods Notes Importer Plugin
+// pen-mappings.ts - Pen mapping utilities for Viwoods Obsidian Plugin
 
 import { App, TFile } from 'obsidian';
 import type { PenMappings } from '../types.js';

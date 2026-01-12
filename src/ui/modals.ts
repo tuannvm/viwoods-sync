@@ -1,4 +1,4 @@
-// ui/modals.ts - Modal classes for Viwoods Notes Importer Plugin
+// ui/modals.ts - Modal classes for Viwoods Obsidian Plugin
 
 import {
     App,

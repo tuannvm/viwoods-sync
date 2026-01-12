@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Type
 
-This is an **Obsidian Community Plugin** - "Viwoods Notes Importer" - that imports `.note` files from Viwoods note-taking software into Obsidian. It processes handwritten notes (converts strokes to SVG), audio recordings, page thumbnails, and supports PDF export.
+This is an **Obsidian Community Plugin** - "Viwoods Obsidian" - that imports `.note` files from Viwoods note-taking software into Obsidian. It processes handwritten notes (converts strokes to SVG), audio recordings, page thumbnails, and supports PDF export.
 
 ## Quick Reference
 

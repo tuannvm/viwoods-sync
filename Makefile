@@ -1,11 +1,11 @@
-# Makefile for Viwoods Notes Importer Obsidian Plugin
+# Makefile for Viwoods Obsidian Plugin
 # Based on tuannvm/codex-mcp-server Makefile structure
 
 .PHONY: help dev build build-check lint format check test test-ui test-coverage test-watch clean install version typecheck ci release-check show-version status
 
 # Default target
 help:
-	@echo "Viwoods Notes Importer - Available commands:"
+	@echo "Viwoods Obsidian - Available commands:"
 	@echo ""
 	@echo "Development:"
 	@echo "  make dev           - Start development build (watch mode)"

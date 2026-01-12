@@ -1,4 +1,4 @@
-// services/import-workflow.ts - Import workflow orchestration for Viwoods Notes Importer
+// services/import-workflow.ts - Import workflow orchestration for Viwoods Obsidian
 
 import { App, Notice, TFolder } from 'obsidian';
 import type { ViwoodsSettings, BookResult, ImportManifest, PageChange, ImportSummary } from '../types.js';

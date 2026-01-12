@@ -1,4 +1,4 @@
-// utils/logger.ts - Debug logging utility for Viwoods Notes Importer Plugin
+// utils/logger.ts - Debug logging utility for Viwoods Obsidian Plugin
 
 /**
  * Debug logging utility that can be toggled at runtime.
