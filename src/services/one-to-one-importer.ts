@@ -75,7 +75,7 @@ export class OneToOneImporter {
                 attachments: attachments.map(a => a.filename)
             };
         } catch (error: any) {
-            console.error('Error importing note:', error);
+            log.error('Error importing note:', error);
             return {
                 success: false,
                 filename: book.bookName + '.md',
@@ -178,7 +178,7 @@ export class OneToOneImporter {
         // If no folder structure, just: viwoods_[notebook_name]
         const namePrefix = dirPrefix ? `viwoods_${dirPrefix}_${book.bookName}` : `viwoods_${book.bookName}`;
 
-        console.log('Attachment naming:', { relativeDir, dirPrefix, namePrefix });
+        log.debug('Attachment naming:', { relativeDir, dirPrefix, namePrefix });
 
         // Save images
         for (const page of book.pages) {
@@ -204,7 +204,7 @@ export class OneToOneImporter {
                 }
                 savedFiles.push({ filename, relativePath: this.calculateRelativePath(filename) });
             } catch (error) {
-                console.error(`Failed to save attachment ${filename}:`, error);
+                log.error(`Failed to save attachment ${filename}:`, error);
             }
         }
 
@@ -226,7 +226,7 @@ export class OneToOneImporter {
                     }
                     savedFiles.push({ filename, relativePath: this.calculateRelativePath(filename) });
                 } catch (error) {
-                    console.error(`Failed to save audio ${filename}:`, error);
+                    log.error(`Failed to save audio ${filename}:`, error);
                 }
             }
         }

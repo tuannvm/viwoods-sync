@@ -8,6 +8,7 @@ import type {
 } from '../types.js';
 import { ExternalFileAccess, ExternalFileInfo } from '../utils/external-file-access.js';
 import { WATCHER_STATE_FILE } from '../utils/constants.js';
+import { log } from '../utils/logger.js';
 
 // Forward declaration to avoid circular dependency
 export interface IImportWorkflow {
@@ -64,7 +65,7 @@ export class AutoSyncService {
      */
     async start(): Promise<void> {
         if (this.isEnabled) {
-            console.log('Auto-sync service already running');
+            log.debug('Auto-sync service already running');
             return;
         }
 
@@ -91,7 +92,7 @@ export class AutoSyncService {
         await this.scanForChanges();
 
         new Notice('Viwoods auto-sync enabled');
-        console.log('Auto-sync service started');
+        log.debug('Auto-sync service started');
     }
 
     /**
@@ -113,7 +114,7 @@ export class AutoSyncService {
 
         this.saveState();
         new Notice('Viwoods auto-sync disabled');
-        console.log('Auto-sync service stopped');
+        log.debug('Auto-sync service stopped');
     }
 
     /**
@@ -142,7 +143,7 @@ export class AutoSyncService {
             await this.scanForChanges();
         }, intervalMs);
 
-        console.log(`Polling started: interval ${this.settings.pollingIntervalMinutes} minutes`);
+        log.debug(`Polling started: interval ${this.settings.pollingIntervalMinutes} minutes`);
     }
 
     // ========================================================================
@@ -158,12 +159,12 @@ export class AutoSyncService {
             return [];
         }
 
-        console.log(`Scanning source folder: ${this.settings.sourceFolderPath}`);
+        log.debug(`Scanning source folder: ${this.settings.sourceFolderPath}`);
 
         try {
             // Scan directory
             const files = await this.fileAccess.scanDirectory(this.settings.sourceFolderPath);
-            console.log(`Found ${files.length} .note files`);
+            log.debug(`Found ${files.length} .note files`);
 
             // Detect changes
             const changes = this.detectChanges(files);
@@ -187,8 +188,8 @@ export class AutoSyncService {
             }
 
             return changes;
-        } catch (error: any) {
-            console.error('Error scanning source folder:', error);
+        } catch (error: unknown) {
+            log.error('Error scanning source folder:', error);
             // Don't show notice for every scan error - could be temporary
             return [];
         }
@@ -212,7 +213,7 @@ export class AutoSyncService {
                     changeType: 'new',
                     lastModified: file.lastModified
                 });
-                console.log(`New file detected: ${file.relativePath}`);
+                log.debug(`New file detected: ${file.relativePath}`);
             } else if (file.lastModified > (knownFile.lastImported || 0)) {
                 // Modified file
                 changes.push({
@@ -222,7 +223,7 @@ export class AutoSyncService {
                     changeType: 'modified',
                     lastModified: file.lastModified
                 });
-                console.log(`Modified file detected: ${file.relativePath}`);
+                log.debug(`Modified file detected: ${file.relativePath}`);
             }
         }
 
@@ -271,7 +272,7 @@ export class AutoSyncService {
             return;
         }
 
-        console.log(`Importing ${this.detectedChanges.length} detected changes`);
+        log.debug(`Importing ${this.detectedChanges.length} detected changes`);
 
         let successCount = 0;
         let failCount = 0;
@@ -288,12 +289,12 @@ export class AutoSyncService {
                         knownFile.lastImported = new Date().toISOString();
                     }
                     successCount++;
-                    console.log(`Imported ${result.filename} (${result.pagesImported} pages)`);
+                    log.debug(`Imported ${result.filename} (${result.pagesImported} pages)`);
                 } else {
                     failCount++;
                 }
-            } catch (error: any) {
-                console.error(`Failed to import ${change.fileName}:`, error);
+            } catch (error: unknown) {
+                log.error(`Failed to import ${change.fileName}:`, error);
                 failCount++;
             }
         }
@@ -325,12 +326,12 @@ export class AutoSyncService {
             if (await adapter.exists(statePath)) {
                 const content = await adapter.read(statePath);
                 this.state = JSON.parse(content);
-                console.log('Watcher state loaded:', this.state);
+                log.debug('Watcher state loaded:', this.state);
             } else {
-                console.log('No existing watcher state found');
+                log.debug('No existing watcher state found');
             }
         } catch (error) {
-            console.error('Error loading watcher state:', error);
+            log.error('Error loading watcher state:', error);
         }
     }
 
@@ -344,9 +345,9 @@ export class AutoSyncService {
             const content = JSON.stringify(this.state, null, 2);
 
             await adapter.write(statePath, content);
-            console.log('Watcher state saved');
+            log.debug('Watcher state saved');
         } catch (error) {
-            console.error('Error saving watcher state:', error);
+            log.error('Error saving watcher state:', error);
         }
     }
 
@@ -429,7 +430,7 @@ export class AutoSyncService {
      * This resets known files, last scan time, and pending changes
      */
     async clearState(): Promise<void> {
-        console.log('Clearing sync state...');
+        log.debug('Clearing sync state...');
 
         // Reset state to initial values
         this.state = {
@@ -448,6 +449,6 @@ export class AutoSyncService {
         // Update status bar
         this.updateStatus();
 
-        console.log('Sync state cleared');
+        log.debug('Sync state cleared');
     }
 }

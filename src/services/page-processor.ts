@@ -156,7 +156,7 @@ export class PageProcessor {
                 backgroundColor: this.settings.backgroundColor
             };
         } catch (error: any) {
-            console.error(`Failed to import page ${pageNum}:`, error);
+            log.error(`Failed to import page ${pageNum}:`, error);
             summary.errors.push({ page: pageNum, error: error.message });
         }
     }
@@ -205,7 +205,7 @@ export class PageProcessor {
                 return await this.app.vault.createBinary(normalizedImagePath, processedImage);
             }
         } catch (imageError) {
-            console.error(`Failed to process image for page ${pageNum}:`, imageError);
+            log.error(`Failed to process image for page ${pageNum}:`, imageError);
             return undefined;
         }
     }

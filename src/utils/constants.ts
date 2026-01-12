@@ -17,7 +17,10 @@ export const DEFAULT_SETTINGS: ViwoodsSettings = {
     sourceFolderPath: '',
     pollingIntervalMinutes: 5,
     showSyncNotifications: true,
-    syncOnStartup: false
+    syncOnStartup: false,
+
+    // Debug settings
+    debugMode: false
 };
 
 export const PEN_MAPPING_PATH = 'Attachments/pen_mapping.json';
