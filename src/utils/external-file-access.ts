@@ -49,31 +49,31 @@ class DesktopFileAccess implements FileAccessImpl {
     async scanDirectory(folderPath: string): Promise<ExternalFileInfo[]> {
         this.ensureInitialized();
 
-        console.log('🔍 scanDirectory called with:', folderPath);
+        log.debug('🔍 scanDirectory called with:', folderPath);
 
         try {
             // Normalize the path - handle trailing slashes, spaces, etc.
             const normalizedPath = this.normalizePath(folderPath);
-            console.log('📁 Normalized path:', normalizedPath);
+            log.debug('📁 Normalized path:', normalizedPath);
 
             // Verify the path exists and is a directory
             try {
                 const stats = this.fs!.statSync(normalizedPath);
-                console.log('📊 Path stats:', { isDirectory: stats.isDirectory(), exists: true });
+                log.debug('📊 Path stats:', { isDirectory: stats.isDirectory(), exists: true });
                 if (!stats.isDirectory()) {
                     throw new Error(`Path is not a directory: ${normalizedPath}`);
                 }
             } catch (pathError) {
-                console.error('❌ Path validation failed:', pathError);
+                log.error('❌ Path validation failed:', pathError);
                 throw new Error(`Cannot access directory: ${normalizedPath}. ${pathError instanceof Error ? pathError.message : 'Unknown error'}`);
             }
 
             const files: ExternalFileInfo[] = [];
             await this.scanDirectoryRecursive(normalizedPath, normalizedPath, files);
-            console.log(`✅ Found ${files.length} .note files`);
+            log.debug(`✅ Found ${files.length} .note files`);
             return files;
         } catch (error) {
-            console.error('❌ Error scanning directory:', error);
+            log.error('❌ Error scanning directory:', error);
             throw new Error(`Failed to scan directory: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
@@ -82,7 +82,7 @@ class DesktopFileAccess implements FileAccessImpl {
      * Normalize file path for cross-platform compatibility
      */
     private normalizePath(inputPath: string): string {
-        console.log('🔧 Normalizing path:', inputPath);
+        log.debug('🔧 Normalizing path:', inputPath);
 
         // Remove trailing slashes
         let normalized = inputPath.replace(/[\/\\]+$/, '');
@@ -90,7 +90,7 @@ class DesktopFileAccess implements FileAccessImpl {
         // Use path.normalize to handle . and .., and convert separators
         normalized = this.path!.normalize(normalized);
 
-        console.log('✨ Normalized result:', normalized);
+        log.debug('✨ Normalized result:', normalized);
         return normalized;
     }
 
@@ -127,7 +127,7 @@ class DesktopFileAccess implements FileAccessImpl {
         try {
             entries = this.fs!.readdirSync(currentPath, { withFileTypes: true });
         } catch (readError) {
-            console.warn(`Cannot read directory ${currentPath}, skipping:`, readError);
+            log.warn(`Cannot read directory ${currentPath}, skipping:`, readError);
             return; // Skip this directory if we can't read it
         }
 
@@ -163,11 +163,11 @@ class DesktopFileAccess implements FileAccessImpl {
                             fileSize: stats.size
                         });
                     } catch (statError) {
-                        console.warn(`Could not stat file ${fullPath}:`, statError);
+                        log.warn(`Could not stat file ${fullPath}:`, statError);
                     }
                 }
             } catch (entryError) {
-                console.warn(`Error processing entry ${entry.name}:`, entryError);
+                log.warn(`Error processing entry ${entry.name}:`, entryError);
             }
         }
     }
@@ -180,7 +180,7 @@ class DesktopFileAccess implements FileAccessImpl {
             const buffer = this.fs!.readFileSync(normalizedPath);
             return new Blob([buffer]);
         } catch (error) {
-            console.error('Error reading file:', error);
+            log.error('Error reading file:', error);
             throw new Error(`Failed to read file: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
@@ -219,7 +219,7 @@ class MobileFileAccess implements FileAccessImpl {
             return true;
         } catch (error: any) {
             if (error.name !== 'AbortError') {
-                console.error('Error requesting directory access:', error);
+                log.error('Error requesting directory access:', error);
                 new Notice(`Failed to access folder: ${error.message}`);
             }
             return false;
@@ -253,13 +253,13 @@ class MobileFileAccess implements FileAccessImpl {
                         fileSize: file.size
                     });
                 } catch (fileError) {
-                    console.warn(`Could not get file ${entry.name}:`, fileError);
+                    log.warn(`Could not get file ${entry.name}:`, fileError);
                 }
             }
 
             return files;
         } catch (error) {
-            console.error('Error scanning mobile directory:', error);
+            log.error('Error scanning mobile directory:', error);
             throw new Error(`Failed to scan directory: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
@@ -274,7 +274,7 @@ class MobileFileAccess implements FileAccessImpl {
             const file = await fileHandle.getFile();
             return file;
         } catch (error) {
-            console.error('Error reading file:', error);
+            log.error('Error reading file:', error);
             throw new Error(`Failed to read file: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }

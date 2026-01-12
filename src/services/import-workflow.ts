@@ -9,6 +9,7 @@ import { ImportSummaryModal, EnhancedImportModal } from '../ui/modals.js';
 import { loadManifest, saveManifest, addHistoryEntry, recoverManifestFromExistingFiles, createManifestBackup, ensureFolder, analyzeChanges } from '../utils/file-utils.js';
 import { hasJSZip } from '../utils/external-libs.js';
 import { ExternalFileAccess } from '../utils/external-file-access.js';
+import { log } from '../utils/logger.js';
 
 export class ImportWorkflow {
     private app: App;
@@ -57,7 +58,7 @@ export class ImportWorkflow {
             if (!existingManifest) {
                 const folderExists = this.app.vault.getAbstractFileByPath(bookFolder);
                 if (folderExists instanceof TFolder) {
-                    console.log('Book folder exists but no manifest, attempting recovery...');
+                    log.debug('Book folder exists but no manifest, attempting recovery...');
                     existingManifest = await recoverManifestFromExistingFiles(
                         this.app,
                         bookFolder,
@@ -99,7 +100,7 @@ export class ImportWorkflow {
 
             new ImportSummaryModal(this.app, summary, backupPath).open();
         } catch (error: any) {
-            console.error('Error processing note file:', error);
+            log.error('Error processing note file:', error);
             new Notice(`Failed to import: ${file.name}\n${error.message}`);
         } finally {
             this.importInProgress = false;
@@ -144,7 +145,7 @@ export class ImportWorkflow {
             // Use existing processNoteFile method
             await this.processNoteFile(file);
         } catch (error: any) {
-            console.error('Error importing from path:', error);
+            log.error('Error importing from path:', error);
             new Notice(`Failed to import from ${filePath}: ${error.message}`);
         }
     }
@@ -157,7 +158,7 @@ export class ImportWorkflow {
      */
     async processNoteFileAuto(file: File, relativePath?: string): Promise<{ success: boolean; filename: string; pagesImported: number }> {
         if (this.importInProgress) {
-            console.warn('Import already in progress');
+            log.warn('Import already in progress');
             return { success: false, filename: file.name, pagesImported: 0 };
         }
         this.importInProgress = true;
@@ -178,15 +179,15 @@ export class ImportWorkflow {
             const result = await oneToOneImporter.importNote(bookResult, relativePath);
 
             if (result.success) {
-                console.log(`Auto-imported ${result.filename} with ${result.pagesImported} pages`);
+                log.debug(`Auto-imported ${result.filename} with ${result.pagesImported} pages`);
                 return { success: true, filename: result.filename, pagesImported: result.pagesImported };
             } else {
-                console.error('Auto-import failed:', result.error);
+                log.error('Auto-import failed:', result.error);
                 new Notice(`Import failed: ${result.error}`);
                 return { success: false, filename: file.name, pagesImported: 0 };
             }
         } catch (error: any) {
-            console.error('Error in auto-import:', error);
+            log.error('Error in auto-import:', error);
             new Notice(`Failed to auto-import: ${file.name}\n${error.message}`);
             return { success: false, filename: file.name, pagesImported: 0 };
         } finally {
@@ -202,7 +203,7 @@ export class ImportWorkflow {
      */
     async processNoteFromPathAuto(filePath: string, relativePath?: string): Promise<{ success: boolean; filename: string; pagesImported: number }> {
         if (this.importInProgress) {
-            console.warn('Import already in progress');
+            log.warn('Import already in progress');
             return { success: false, filename: filePath, pagesImported: 0 };
         }
 
@@ -222,7 +223,7 @@ export class ImportWorkflow {
             // Use auto-import method with relative path
             return await this.processNoteFileAuto(file, relativePath);
         } catch (error: any) {
-            console.error('Error importing from path:', error);
+            log.error('Error importing from path:', error);
             return { success: false, filename: filePath, pagesImported: 0 };
         }
     }

@@ -83,6 +83,9 @@ export interface ViwoodsSettings {
     pollingIntervalMinutes: number;
     showSyncNotifications: boolean;
     syncOnStartup: boolean;
+
+    // Debug settings (1)
+    debugMode: boolean;
 }
 
 export interface PenMapping {

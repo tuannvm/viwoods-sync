@@ -29,10 +29,10 @@ export class ImporterService {
         let bookName = fileName.replace('.note', '').replace('.zip', '');
         let metadata: any = {};
         const pages: PageData[] = [];
-        console.log(`Converting note to book: ${fileName}, format: ${isNewFormat ? 'new' : 'old'}`);
-        console.log(`Total files in archive: ${files.length}`);
+        log.debug(`Converting note to book: ${fileName}, format: ${isNewFormat ? 'new' : 'old'}`);
+        log.debug(`Total files in archive: ${files.length}`);
         const allAudioFiles = files.filter(f => f.includes('audio') || f.endsWith('.m4a') || f.endsWith('.mp3'));
-        console.log(`Found ${allAudioFiles.length} audio files:`, allAudioFiles);
+        log.debug(`Found ${allAudioFiles.length} audio files:`, allAudioFiles);
 
         if (isNewFormat) {
             return await this.convertNewFormat(zip, files, bookName, allAudioFiles);
@@ -54,14 +54,14 @@ export class ImporterService {
         if (noteFileInfo) {
             metadata = JSON.parse(await zip.file(noteFileInfo).async('string'));
             bookName = this.settings.filePrefix + (metadata.fileName || bookName);
-            console.log(`Book name from metadata: ${bookName}`);
+            log.debug(`Book name from metadata: ${bookName}`);
         }
 
         const pageResourceFile = files.find(f => f.includes('PageResource.json'));
         if (pageResourceFile) {
             const pageResource = JSON.parse(await zip.file(pageResourceFile).async('string'));
             const mainBmpFiles = pageResource.filter((r: any) => r.fileName?.includes('mainBmp'));
-            console.log(`Processing ${mainBmpFiles.length} pages`);
+            log.debug(`Processing ${mainBmpFiles.length} pages`);
 
             for (let i = 0; i < mainBmpFiles.length; i++) {
                 const bmpResource = mainBmpFiles[i];
@@ -94,7 +94,7 @@ export class ImporterService {
                             originalName: audioFileName || '',
                             name: `${bookName}_page_${String(pageNum).padStart(3, '0')}_audio.m4a`
                         };
-                        console.log(`Added audio for page ${pageNum}: ${audioFile}`);
+                        log.debug(`Added audio for page ${pageNum}: ${audioFile}`);
                     }
 
                     pages.push(pageData);
@@ -107,11 +107,11 @@ export class ImporterService {
             const thumbnailFile = files.find(f => f.includes('Thumbnail') || f.includes('thumbnai'));
             if (thumbnailFile) {
                 thumbnail = await zip.file(thumbnailFile).async('blob');
-                console.log('Found thumbnail');
+                log.debug('Found thumbnail');
             }
         }
 
-        console.log(`Conversion complete: ${pages.length} pages, ${pages.filter(p => p.audio).length} with audio`);
+        log.debug(`Conversion complete: ${pages.length} pages, ${pages.filter(p => p.audio).length} with audio`);
         return { bookName, metadata, pages, thumbnail };
     }
 
@@ -128,13 +128,13 @@ export class ImporterService {
         if (notesBeanFile) {
             metadata = JSON.parse(await zip.file(notesBeanFile).async('string'));
             bookName = this.settings.filePrefix + (metadata.nickname || metadata.noteName || bookName);
-            console.log(`Book name from old format metadata: ${bookName}`);
+            log.debug(`Book name from old format metadata: ${bookName}`);
         }
 
         const noteListFile = files.find(f => f.includes('NoteList.json'));
         if (noteListFile) {
             const noteList = JSON.parse(await zip.file(noteListFile).async('string'));
-            console.log(`Processing ${noteList.length} pages from old format`);
+            log.debug(`Processing ${noteList.length} pages from old format`);
 
             for (let i = 0; i < noteList.length; i++) {
                 const page = noteList[i];
@@ -158,7 +158,7 @@ export class ImporterService {
                             originalName: audioFileName || '',
                             name: `${bookName}_page_${String(pageNum).padStart(3, '0')}_audio.m4a`
                         };
-                        console.log(`Added audio for page ${pageNum} (old format): ${audioFile}`);
+                        log.debug(`Added audio for page ${pageNum} (old format): ${audioFile}`);
                     }
 
                     pages.push(pageData);
@@ -186,13 +186,13 @@ export class ImporterService {
             if (typeof pattern === 'string') {
                 const found = files.find(f => f.includes(pattern));
                 if (found) {
-                    console.log(`Found audio for page ${pageNum} using pattern`);
+                    log.debug(`Found audio for page ${pageNum} using pattern`);
                     return found;
                 }
             } else if (typeof pattern === 'function') {
                 const found = files.find(f => pattern(f));
                 if (found) {
-                    console.log(`Found audio for page ${pageNum} using function pattern`);
+                    log.debug(`Found audio for page ${pageNum} using function pattern`);
                     return found;
                 }
             }
@@ -202,12 +202,12 @@ export class ImporterService {
         if (allAudioFiles.length > 0) {
             const sortedAudioFiles = allAudioFiles.sort();
             if (sortedAudioFiles[pageNum - 1]) {
-                console.log(`Using audio file by index for page ${pageNum}: ${sortedAudioFiles[pageNum - 1]}`);
+                log.debug(`Using audio file by index for page ${pageNum}: ${sortedAudioFiles[pageNum - 1]}`);
                 return sortedAudioFiles[pageNum - 1];
             }
         }
 
-        console.log(`No audio found for page ${pageNum}`);
+        log.debug(`No audio found for page ${pageNum}`);
         return null;
     }
 }

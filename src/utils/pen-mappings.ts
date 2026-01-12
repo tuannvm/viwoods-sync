@@ -10,13 +10,13 @@ export async function loadPenMappings(app: App): Promise<PenMappings> {
         if (mappingFile instanceof TFile) {
             const content = await app.vault.read(mappingFile);
             const mappings = JSON.parse(content);
-            console.log('Loaded pen mappings from Attachments/pen_mapping.json');
+            log.debug('Loaded pen mappings from Attachments/pen_mapping.json');
             return mappings;
         }
     } catch (error) {
-        console.error('Failed to load pen mappings:', error);
+        log.error('Failed to load pen mappings:', error);
     }
-    console.log('Using default pen mappings');
+    log.debug('Using default pen mappings');
     return getKnownPenMappings();
 }
 

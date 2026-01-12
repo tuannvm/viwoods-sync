@@ -3,6 +3,7 @@
 import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
 import type { ViwoodsSettings } from './types.js';
 import { DEFAULT_SETTINGS } from './utils/constants.js';
+import { setDebugMode } from './utils/logger.js';
 import ViwoodsImporterPlugin from './main.js';
 
 export type { ViwoodsSettings };
@@ -123,6 +124,22 @@ export class ViwoodsSettingTab extends PluginSettingTab {
             .onChange(async (value) => {
                 this.plugin.settings.showSyncNotifications = value;
                 await this.plugin.saveSettings();
+            }));
+
+        // ========================================================================
+        // Section 4: Debug
+        // ========================================================================
+        containerEl.createEl('h3', { text: 'Debug' });
+
+        new Setting(containerEl).setName('Debug mode').setDesc('Enable debug logging to console (for troubleshooting)').addToggle(toggle => toggle
+            .setValue(this.plugin.settings.debugMode)
+            .onChange(async (value) => {
+                this.plugin.settings.debugMode = value;
+                setDebugMode(value);
+                await this.plugin.saveSettings();
+                if (value) {
+                    new Notice('Debug mode enabled. Check console for detailed logs.');
+                }
             }));
     }
 }

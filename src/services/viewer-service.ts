@@ -2,6 +2,7 @@
 
 import { App, TFile, MarkdownPostProcessorContext, normalizePath, Notice } from 'obsidian';
 import type { ViwoodsSettings } from '../types.js';
+import { log } from '../utils/logger.js';
 
 export class ViewerService {
     constructor(
@@ -28,23 +29,23 @@ export class ViewerService {
             const strokeContent = await this.app.vault.read(strokeFile);
             let strokeData: number[][] = JSON.parse(strokeContent);
 
-            console.log('=== SVG VIEWER DEBUG ===');
-            console.log(`Raw data points: ${strokeData.length}`);
+            log.debug('=== SVG VIEWER DEBUG ===');
+            log.debug(`Raw data points: ${strokeData.length}`);
 
             // Normalize and scale stroke data
             strokeData = this.normalizeStrokeData(strokeData);
 
             // Detect strokes from point data
             const detectedStrokes = this.detectStrokes(strokeData);
-            console.log(`Detected ${detectedStrokes.length} strokes`);
+            log.debug(`Detected ${detectedStrokes.length} strokes`);
 
             // Create UI
             this.createViewerUI(el, strokeFileName, strokeData, detectedStrokes);
 
-            console.log('=== COMPLETE ===');
-        } catch (error: any) {
-            console.error('Error:', error);
-            el.createEl('p', { text: 'Failed to load: ' + error.message });
+            log.debug('=== COMPLETE ===');
+        } catch (error: unknown) {
+            log.error('Error:', error);
+            el.createEl('p', { text: 'Failed to load: ' + (error instanceof Error ? error.message : 'Unknown error') });
         }
     }
 
@@ -338,13 +339,13 @@ export class ViewerService {
                         await this.app.vault.createBinary(normalizedPdfPath, arrayBuffer);
                         new Notice(`Created: ${pdfFileName}`);
                     }
-                } catch (error: any) {
-                    console.error('Failed to save PDF:', error);
-                    new Notice('Failed to save PDF: ' + error.message);
+                } catch (error: unknown) {
+                    log.error('Failed to save PDF:', error);
+                    new Notice('Failed to save PDF: ' + (error instanceof Error ? error.message : 'Unknown error'));
                 }
 
-            } catch (error: any) {
-                new Notice('PDF export failed: ' + error.message);
+            } catch (error: unknown) {
+                new Notice('PDF export failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
             }
         };
 

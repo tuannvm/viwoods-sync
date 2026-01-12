@@ -11,7 +11,7 @@ export async function hashImageData(blob: Blob): Promise<string> {
         const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         return hashHex.substring(0, 32);
     } catch (error) {
-        console.error('Error hashing image:', error);
+        log.error('Error hashing image:', error);
         return `fallback-${blob.size}`.padEnd(32, '0').substring(0, 32);
     }
 }
@@ -31,7 +31,7 @@ export async function analyzeChanges(
             changes.push({ pageNum: page.pageNum, type: 'new', newHash: page.image.hash });
             summary.newPages.push(page.pageNum);
         }
-        console.log('No existing manifest - all pages are new');
+        log.debug('No existing manifest - all pages are new');
         return { changes, summary };
     }
 
@@ -54,11 +54,11 @@ export async function analyzeChanges(
                     const hashMatch = frontmatter.match(/original_image_hash:\s*"?([a-f0-9]+)"?/);
                     if (hashMatch) {
                         data.fileHash = hashMatch[1];
-                        console.log(`Page ${pageNum}: Found hash in file: ${hashMatch[1].substring(0, 8)}...`);
+                        log.debug(`Page ${pageNum}: Found hash in file: ${hashMatch[1].substring(0, 8)}...`);
                     }
                 }
             } catch (error) {
-                console.error(`Failed to read hash from page ${pageNum}:`, error);
+                log.error(`Failed to read hash from page ${pageNum}:`, error);
             }
         }
     }
@@ -74,12 +74,12 @@ export async function analyzeChanges(
             const isResetHash = existingHash.startsWith('RESET-');
             const hashesMatch = existingHash === page.image.hash;
             if (isRecoveredHash || isResetHash) {
-                console.log(`Page ${page.pageNum}: Special hash (${isRecoveredHash ? 'recovered' : 'reset'}), treating as modified`);
+                log.debug(`Page ${page.pageNum}: Special hash (${isRecoveredHash ? 'recovered' : 'reset'}), treating as modified`);
                 changes.push({ pageNum: page.pageNum, type: 'modified', oldHash: existingHash, newHash: page.image.hash, hasAudioChange: !!page.audio !== !!existing.manifestInfo.hasAudio });
                 summary.modifiedPages.push(page.pageNum);
             } else if (!hashesMatch) {
-                console.log(`Page ${page.pageNum} modified: ${existingHash.substring(0, 8)}... → ${page.image.hash.substring(0, 8)}...`);
-                console.log(`  Source: ${existing.fileHash ? 'file frontmatter' : 'manifest'}`);
+                log.debug(`Page ${page.pageNum} modified: ${existingHash.substring(0, 8)}... → ${page.image.hash.substring(0, 8)}...`);
+                log.debug(`  Source: ${existing.fileHash ? 'file frontmatter' : 'manifest'}`);
                 changes.push({ pageNum: page.pageNum, type: 'modified', oldHash: existingHash, newHash: page.image.hash, hasAudioChange: !!page.audio !== !!existing.manifestInfo.hasAudio });
                 summary.modifiedPages.push(page.pageNum);
             } else {
@@ -96,7 +96,7 @@ export async function analyzeChanges(
         summary.deletedPages.push(pageNum);
     });
 
-    console.log('Change Analysis Summary:', { total: bookResult.pages.length, new: summary.newPages.length, modified: summary.modifiedPages.length, unchanged: summary.unchangedPages.length, deleted: summary.deletedPages.length });
+    log.debug('Change Analysis Summary:', { total: bookResult.pages.length, new: summary.newPages.length, modified: summary.modifiedPages.length, unchanged: summary.unchangedPages.length, deleted: summary.deletedPages.length });
     return { changes, summary };
 }
 
@@ -111,7 +111,7 @@ export async function createManifestBackup(app: App, manifestPath: string, creat
             return backupPath;
         }
     } catch (error) {
-        console.error('Failed to create manifest backup:', error);
+        log.error('Failed to create manifest backup:', error);
     }
     return null;
 }
@@ -132,7 +132,7 @@ export async function recoverManifestFromExistingFiles(
     addHistoryEntryFn: typeof addHistoryEntry,
     saveManifestFn: (app: App, manifestPath: string, manifest: ImportManifest) => Promise<void>
 ): Promise<ImportManifest | null> {
-    console.log(`Attempting to recover manifest for ${bookName}`);
+    log.debug(`Attempting to recover manifest for ${bookName}`);
     const folder = app.vault.getAbstractFileByPath(bookFolder);
     if (!(folder instanceof TFolder)) return null;
     const manifest: ImportManifest = { bookName: bookName, totalPages: 0, importedPages: {}, lastImport: new Date().toISOString(), sourceFile: bookName, version: '1.1', history: [] };
@@ -153,7 +153,7 @@ export async function recoverManifestFromExistingFiles(
                 const imageFile = app.vault.getAbstractFileByPath(imagePath);
                 if (imageFile instanceof TFile) {
                     imageHash = `recovered-${imageFile.stat.size}-${imageFile.stat.mtime}`;
-                    console.log(`Using recovered placeholder hash for page ${pageNum}: ${imageHash}`);
+                    log.debug(`Using recovered placeholder hash for page ${pageNum}: ${imageHash}`);
                 }
                 manifest.importedPages[pageNum] = { fileName: child.name, importDate: new Date(child.stat.mtime).toISOString(), imageHash: imageHash, geminiProcessed: hasGemini, hasAudio: hasAudio, lastModified: new Date(child.stat.mtime).toISOString(), size: child.stat.size };
             }
@@ -161,13 +161,13 @@ export async function recoverManifestFromExistingFiles(
     }
     manifest.totalPages = maxPage;
     if (Object.keys(manifest.importedPages).length > 0) {
-        console.log(`Recovered manifest with ${Object.keys(manifest.importedPages).length} pages`);
+        log.debug(`Recovered manifest with ${Object.keys(manifest.importedPages).length} pages`);
         addHistoryEntryFn(manifest, 'import', Object.keys(manifest.importedPages).map(Number), 'Manifest recovered from existing files', settings.maxHistoryEntries);
         const manifestPath = `${bookFolder}/.import-manifest.json`;
         try {
             await saveManifestFn(app, manifestPath, manifest);
         } catch (error) {
-            console.error('Failed to save recovered manifest:', error);
+            log.error('Failed to save recovered manifest:', error);
         }
         return manifest;
     }
@@ -175,40 +175,40 @@ export async function recoverManifestFromExistingFiles(
 }
 
 export async function loadManifest(app: App, manifestPath: string): Promise<ImportManifest | null> {
-    console.log(`Attempting to load manifest from: ${manifestPath}`);
+    log.debug(`Attempting to load manifest from: ${manifestPath}`);
     const manifestFile = app.vault.getAbstractFileByPath(manifestPath);
     if (manifestFile instanceof TFile) {
         const content = await app.vault.read(manifestFile);
         const manifest = JSON.parse(content);
-        console.log(`Loaded manifest with ${Object.keys(manifest.importedPages).length} pages`);
+        log.debug(`Loaded manifest with ${Object.keys(manifest.importedPages).length} pages`);
         return manifest;
     }
-    console.log('No manifest file found');
+    log.debug('No manifest file found');
     return null;
 }
 
 export async function saveManifest(app: App, manifestPath: string, manifest: ImportManifest, ensureFolderFn: (app: App, path: string) => Promise<void>) {
-    console.log(`Saving manifest to: ${manifestPath}`);
-    console.log(`Manifest contains ${Object.keys(manifest.importedPages).length} pages`);
+    log.debug(`Saving manifest to: ${manifestPath}`);
+    log.debug(`Manifest contains ${Object.keys(manifest.importedPages).length} pages`);
     const manifestFile = app.vault.getAbstractFileByPath(manifestPath);
     const content = JSON.stringify(manifest, null, 2);
     try {
         if (manifestFile instanceof TFile) {
             await app.vault.modify(manifestFile, content);
-            console.log('Manifest updated successfully');
+            log.debug('Manifest updated successfully');
         } else {
             await app.vault.create(manifestPath, content);
-            console.log('Manifest created successfully');
+            log.debug('Manifest created successfully');
         }
     } catch (error) {
-        console.error('Failed to save manifest:', error);
+        log.error('Failed to save manifest:', error);
         try {
             const folder = manifestPath.substring(0, manifestPath.lastIndexOf('/'));
             await ensureFolderFn(app, folder);
             await app.vault.adapter.write(manifestPath, content);
-            console.log('Manifest saved using adapter');
+            log.debug('Manifest saved using adapter');
         } catch (fallbackError) {
-            console.error('Failed to save manifest using fallback:', fallbackError);
+            log.error('Failed to save manifest using fallback:', fallbackError);
         }
     }
 }
@@ -243,7 +243,7 @@ export async function ensureFolder(app: App, path: string) {
                 const checkAgain = app.vault.getAbstractFileByPath(normalizedPath);
                 if (!checkAgain) {
                     // Only log and throw if folder truly doesn't exist
-                    console.error(`Failed to create folder ${normalizedPath}:`, error);
+                    log.error(`Failed to create folder ${normalizedPath}:`, error);
                     throw error;
                 }
                 // If folder exists, continue without error

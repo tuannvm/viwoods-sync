@@ -37,6 +37,7 @@ import { registerCommands } from './commands/registry.js';
 // Import utilities
 import { loadJSZip, loadJsPDF } from './utils/external-libs.js';
 import { initPenMappings, getPenMappings } from './utils/pen-mapping-helpers.js';
+import { setDebugMode } from './utils/logger.js';
 
 declare global {
     interface Window {
@@ -68,39 +69,47 @@ export default class ViwoodsImporterPlugin extends Plugin {
     private statusBarItem: HTMLElement | null = null;
 
     async onload() {
-        await this.loadSettings();
-        await loadJSZip();
-        await loadJsPDF();
-        await this.loadPenMappings();
+        try {
+            await this.loadSettings();
+            setDebugMode(this.settings.debugMode);
 
-        // Initialize services
-        this.importerService = new ImporterService(this.app, this.settings, this.penMappings);
-        this.pageProcessor = new PageProcessor(this.app, this.settings, ProgressModal);
-        this.viewerService = new ViewerService(this.app, this.settings);
-        this.importWorkflow = new ImportWorkflow(this.app, this.settings, this.importerService, this.pageProcessor);
-        this.autoSyncService = new AutoSyncService(this.app, this.settings, this.importWorkflow, this);
+            await loadJSZip();
+            await loadJsPDF();
+            await this.loadPenMappings();
 
-        // Initialize handlers
-        this.dragDropHandler = new DragDropHandler((file: File) => this.importWorkflow!.processNoteFile(file));
+            // Initialize services
+            this.importerService = new ImporterService(this.app, this.settings, this.penMappings);
+            this.pageProcessor = new PageProcessor(this.app, this.settings, ProgressModal);
+            this.viewerService = new ViewerService(this.app, this.settings);
+            this.importWorkflow = new ImportWorkflow(this.app, this.settings, this.importerService, this.pageProcessor);
+            this.autoSyncService = new AutoSyncService(this.app, this.settings, this.importWorkflow, this);
 
-        // Register all commands and processors via registry
-        registerCommands(this, {
-            app: this.app,
-            settings: this.settings,
-            penMappings: this.penMappings,
-            importerService: this.importerService,
-            pageProcessor: this.pageProcessor,
-            viewerService: this.viewerService,
-            importWorkflow: this.importWorkflow,
-            dragDropHandler: this.dragDropHandler,
-            plugin: this
-        });
+            // Initialize handlers
+            this.dragDropHandler = new DragDropHandler((file: File) => this.importWorkflow!.processNoteFile(file));
 
-        // Initialize auto-sync
-        await this.initAutoSync();
+            // Register all commands and processors via registry
+            registerCommands(this, {
+                app: this.app,
+                settings: this.settings,
+                penMappings: this.penMappings,
+                importerService: this.importerService,
+                pageProcessor: this.pageProcessor,
+                viewerService: this.viewerService,
+                importWorkflow: this.importWorkflow,
+                dragDropHandler: this.dragDropHandler,
+                plugin: this
+            });
 
-        // Register auto-sync commands
-        this.registerSyncCommands();
+            // Initialize auto-sync
+            await this.initAutoSync();
+
+            // Register auto-sync commands
+            this.registerSyncCommands();
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            new Notice(`Failed to initialize Viwoods plugin: ${message}`);
+            console.error('[Viwoods] Plugin initialization error:', error);
+        }
     }
 
     async onunload() {
