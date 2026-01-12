@@ -67,6 +67,7 @@ jobs:
           WITH_V: true
           RELEASE_BRANCHES: main,master
           VERBOSE: true
+          GIT_API_TAGGING: false
 
       - name: Update manifest.json version
         run: |
