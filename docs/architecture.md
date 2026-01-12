@@ -4,14 +4,50 @@
 
 The Viwoods Notes Importer is an Obsidian plugin that processes Viwoods `.note` files and converts them into Obsidian-compatible formats (Markdown, SVG, PNG, MP3, PDF).
 
-## Plugin Lifecycle
+## Plugin Structure
 
-The entire plugin is implemented in `main.ts` as a single `ViwoodsImporterPlugin` class extending Obsidian's `Plugin`:
+The plugin is organized into a modular `src/` directory structure:
+
+```
+src/
+├── main.ts                           # Plugin entry point and lifecycle
+├── types.ts                          # All type definitions
+├── settings.ts                       # Settings management
+├── commands/
+│   ├── registry.ts                   # Command registration
+│   ├── export-pdf-command.ts         # PDF export command
+│   └── reset-hashes-command.ts       # Hash reset command
+├── services/
+│   ├── importer-service.ts           # Main import orchestration
+│   ├── import-workflow.ts            # Import workflow logic
+│   ├── one-to-one-importer.ts        # One-to-one folder mapping
+│   ├── page-processor.ts             # Page data processing
+│   ├── viewer-service.ts             # SVG viewer management
+│   └── auto-sync-service.ts          # Auto-sync/polling
+├── ui/
+│   ├── modals.ts                     # Modal dialogs
+│   ├── sync-modals.ts                # Sync-related modals
+│   └── import-notice-modal.ts        # Import notifications
+└── utils/
+    ├── constants.ts                  # Constants and defaults
+    ├── file-utils.ts                 # File operations
+    ├── image-utils.ts                # Image processing
+    ├── external-libs.ts              # External library loaders
+    ├── external-file-access.ts       # File system access
+    ├── logger.ts                     # Debug logging
+    ├── pen-mappings.ts               # Pen color/thickness mappings
+    ├── pen-mapping-helpers.ts        # Pen mapping utilities
+    ├── pdf-generator.ts              # PDF generation
+    ├── platform.ts                   # Platform detection
+    └── svg-generator.ts              # SVG generation from strokes
+```
+
+## Plugin Lifecycle
 
 ```typescript
 class ViwoodsImporterPlugin extends Plugin {
-  async onload()   // Register commands and load settings
-  async onunload() // Cleanup
+  async onload()   // Register commands, load settings, setup auto-sync
+  async onunload() // Cleanup services, intervals, event listeners
 }
 ```
 
@@ -21,13 +57,25 @@ class ViwoodsImporterPlugin extends Plugin {
 Tracks imported pages with hashes, dates, and metadata:
 ```typescript
 interface ImportManifest {
-  [bookId: string]: {
-    [pageId: string]: {
-      hash: string;
-      date: string;
-      audioDate?: string;
+  bookName: string;
+  totalPages: number;
+  importedPages: {
+    [pageNumber: number]: {
+      fileName: string;
+      importDate: string;
+      imageHash: string;
+      displayImageHash?: string;
+      geminiProcessed: boolean;
+      hasAudio?: boolean;
+      lastModified?: string;
+      size?: number;
+      backgroundColor?: string;
     }
-  }
+  };
+  lastImport: string;
+  sourceFile: string;
+  version: string;
+  history?: ImportHistory[];
 }
 ```
 
@@ -35,64 +83,94 @@ interface ImportManifest {
 Raw page data extracted from Viwoods files:
 ```typescript
 interface PageData {
-  imageBlob: Blob;
-  strokeData?: any;
-  audioBlob?: Blob;
-}
-```
-
-### BookResult
-Parsed book with pages and thumbnail:
-```typescript
-interface BookResult {
-  pages: Map<string, PageData>;
-  thumbnail?: Blob;
+  pageNum: number;
+  image: {
+    blob: Blob;
+    hash: string;
+  };
+  stroke?: number[][];  // Stroke data: array of [x, y, timestamp] points
+  audio?: {
+    blob: Blob;
+    originalName: string;
+    name: string;
+  };
 }
 ```
 
 ### PageChange
 Change detection result:
 ```typescript
-enum PageChange {
-  New, Modified, Unchanged, Deleted
+interface PageChange {
+  pageNum: number;
+  type: 'new' | 'modified' | 'unchanged' | 'deleted';
+  oldHash?: string;
+  newHash?: string;
+  hasAudioChange?: boolean;
 }
 ```
 
 ## Commands
 
-| Command ID | Description |
-|------------|-------------|
-| `import-viwoods-note` | Main import flow from Viwoods `.note` files |
-| `export-viwoods-book` | Export book data |
-| `export-page-to-pdf` | PDF generation per page |
-| `reset-book-hashes` | Reset import tracking |
+| Command ID | Description | Handler |
+|------------|-------------|---------|
+| `import-viwoods-note` | Main import flow from Viwoods `.note` files | `importer-service.ts` |
+| `export-viwoods-book` | Export book data | `import-workflow.ts` |
+| `export-page-to-pdf` | PDF generation per page | `export-pdf-command.ts` |
+| `reset-book-hashes` | Reset import tracking | `reset-hashes-command.ts` |
 
-## Key Components
+## Key Services
 
-### Viwoods File Parser
-- Reads proprietary Viwoods `.note` format (XML/JSON structure)
-- Extracts images, stroke data, and audio blobs
-- Generates thumbnails from book covers
+### ImporterService (`services/importer-service.ts`)
+Main orchestration for importing Viwoods files:
+- Parses `.note` file format (proprietary ZIP-based format)
+- Extracts images, stroke data, and audio
+- Manages import manifests and change detection
+- Coordinates page processing
 
-### Change Detection
-- Uses image hashing to detect modified pages
-- Compares stored hashes in `ImportManifest`
-- Identifies new, modified, unchanged, and deleted pages
-
-### SVG Generator
+### PageProcessor (`services/page-processor.ts`)
+Processes individual pages:
+- Generates PNG images from raw image data
 - Converts stroke data to SVG format
-- Embedded in Markdown files for handwritten notes viewing
-- Preserves pen strokes and colors
+- Extracts and saves audio recordings
+- Calculates image hashes for change detection
 
-### Audio Handler
-- Extracts audio recordings from notes
-- Saves as MP3 files in configured audio folder
-- Links to audio in generated Markdown
+### AutoSyncService (`services/auto-sync-service.ts`)
+Background folder watching:
+- Polls source folder at configured intervals
+- Detects new and modified `.note` files
+- Queues imports for detected changes
+- Persists watcher state across plugin restarts
 
-### PDF Export
-- Uses jsPDF library (loaded dynamically via script tag)
-- Generates per-page PDFs
-- Checks for `window.jspdf` before use
+### ViewerService (`services/viewer-service.ts`)
+SVG viewer management:
+- Registers custom markdown code block renderer
+- Handles stroke-to-SVG conversion display
+- Manages viewer settings (smoothness, replay)
+
+## Utilities
+
+### SVG Generator (`utils/svg-generator.ts`)
+Converts stroke data to SVG:
+- `strokesToSVG()` - Main SVG generation from stroke points
+- `smoothPoints()` - Point smoothing algorithm
+- `smoothStrokeData()` - Stroke-based smoothing
+- `getPenStyle()` - Pen color/width lookup
+
+### PDF Generator (`utils/pdf-generator.ts`)
+PDF export functionality:
+- `exportSvgToPdf()` - Exports page as PDF using jsPDF
+- `generatePdfFromStrokes()` - Direct stroke-to-PDF conversion
+
+### External Libraries (`utils/external-libs.ts`)
+Dynamic script loading:
+- `loadJSZip()` - Loads JSZip from CDN
+- `loadJsPDF()` - Loads jsPDF from CDN
+- `hasJSZip()` - Checks if JSZip is available
+
+### Pen Mappings (`utils/pen-mappings.ts`)
+Pen color/thickness configuration:
+- Maps Viwoods pen IDs to visual styles
+- Supports pen type, color, thickness, and opacity
 
 ## Folder Structure
 
@@ -100,24 +178,34 @@ All folders are configurable in plugin settings:
 
 ```
 <Vault>/
-├── <notes folder>/      # Markdown files
-├── <images folder>/     # Page images (PNG)
-├── <audio folder>/      # Audio recordings (MP3)
-├── <strokes folder>/    # SVG files (handwritten notes)
-└── <pdf folder>/        # Generated PDFs
+├── <notes folder>/      # Markdown files (default: Viwoods Notes)
+├── <images folder>/     # Page images (PNG, default: Attachments)
+├── <audio folder>/      # Audio recordings (MP3, default: Attachments)
+├── <strokes folder>/    # SVG files (default: Attachments)
+└── <pdf folder>/        # Generated PDFs (default: PDFs)
 ```
+
+## Change Detection
+
+Uses image hashing to detect modified pages:
+1. Calculate perceptual hash of page image
+2. Compare with stored hash in ImportManifest
+3. Classify as: new, modified, unchanged, or deleted
+4. Only update changed pages to avoid unnecessary writes
 
 ## External Libraries
 
-- **JSZip** - Loaded via script tag in markdown post-processor
-- **jsPDF** - Loaded via script tag, checked via `window.jspdf`
+- **JSZip** - Loaded via CDN (`https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js`)
+- **jsPDF** - Loaded via CDN (`https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js`)
 
-Declared globally:
+Both are loaded dynamically as needed (not bundled) to keep plugin size small.
+
+Global type declarations:
 ```typescript
 declare global {
   interface Window {
-    JSZip: any;
-    jspdf: any;
+    JSZip?: { loadAsync(data: Blob | string): Promise<JSZip> };
+    jspdf?: { jsPDF: jsPDF };
   }
 }
 ```
@@ -136,3 +224,5 @@ All event listeners use `register*` helpers for proper cleanup:
 - `this.registerEvent()` - App events
 - `this.registerDomEvent()` - DOM events
 - `this.registerInterval()` - Intervals
+
+This ensures all resources are cleaned up when the plugin is unloaded.

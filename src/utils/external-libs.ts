@@ -32,7 +32,7 @@ declare global {
     }
 }
 
-export type { JSZip, JSZipFile, jsPDF, jsPDFInstance };
+export type { JSZip, jsPDF };
 
 export async function loadJSZip(): Promise<void> {
     const script = document.createElement('script');
@@ -58,6 +58,3 @@ export function hasJSZip(): boolean {
     return typeof window.JSZip !== 'undefined';
 }
 
-export function hasJsPDF(): boolean {
-    return typeof window.jspdf !== 'undefined';
-}
