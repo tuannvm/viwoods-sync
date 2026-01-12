@@ -1,6 +1,7 @@
 # top-most EditorConfig file
 root = true
 
+# Default settings (project uses tabs for source code)
 [*]
 charset = utf-8
 end_of_line = lf
@@ -8,3 +9,33 @@ insert_final_newline = true
 indent_style = tab
 indent_size = 4
 tab_width = 4
+
+# YAML files use spaces
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# Markdown files use spaces
+[*.md]
+indent_style = space
+indent_size = 2
+
+# JSON files use spaces
+[*.json]
+indent_style = space
+indent_size = 2
+
+# Package JSON files use 2-space indentation
+[package.json]
+indent_style = space
+indent_size = 2
+
+# CSS/SCSS use 2-space indentation
+[*.{css,scss,sass,less}]
+indent_style = space
+indent_size = 2
+
+# HTML files use 2-space indentation
+[*.{html,htm}]
+indent_style = space
+indent_size = 2
