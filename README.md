@@ -83,6 +83,66 @@ Configure sync behavior in **Settings → Viwoods Sync**:
 
 > **Note:** Auto-sync requires desktop Obsidian. Imported notes can be viewed on any platform (desktop/mobile).
 
+## Cloud Sync Integration
+
+### Google Drive
+
+Viwoods can export notes to Google Drive, making them accessible across devices. To sync with Obsidian:
+
+1. **Install Google Drive Desktop** (Google Drive for desktop)
+   - Download from https://www.google.com/drive/download/
+   - Sign in and sync your Viwoods folder to your local filesystem
+
+2. **Configure Viwoods Export**
+   - In Viwoods app, set the export location to your Google Drive folder
+   - Typical path: `~/Google Drive/My Drive/Viwoods/` or similar
+
+3. **Set Up Obsidian Auto-Sync**
+   - **Source folder path**: Point to your local Google Drive sync folder
+     - Example: `/Users/<username>/Google Drive/My Drive/Viwoods/`
+   - **Enable auto-sync**: Turn on to watch for changes
+   - **Polling interval**: Set to 1-5 minutes for near real-time sync
+
+4. **How It Works**
+   - When Viwoods exports notes to Google Drive → Google Drive desktop syncs locally
+   - Obsidian plugin detects changes → Auto-imports to your vault
+   - Works bidirectionally: changes on any device sync through Google Drive
+
+### Viwoods Cloud Backup
+
+Viwoods (v3.6+) supports built-in sync to Google Drive, OneDrive, and Dropbox. See the [official sync guide](https://viwoods.com/blogs/paper-tablet/file-sync-and-share-across-devices) and this [community tutorial](https://www.reddit.com/r/viwoods/comments/1od4690/seamless_automatic_synchronization_across_devices/).
+
+#### Quick Setup with Obsidian
+
+1. **Enable Viwoods Cloud Sync**
+   - Viwoods Settings → Cloud Sync → Link account (Google Drive/OneDrive/Dropbox)
+   - Select notebooks to sync, enable auto-sync
+
+2. **Install Desktop Sync Client**
+   - [Google Drive](https://www.google.com/drive/download/) | [OneDrive](https://www.microsoft.com/en-us/microsoft-365/onedrive/download) | [Dropbox](https://www.dropbox.com/install)
+
+3. **Configure Plugin Auto-Sync**
+   - **Source folder path**: Point to your local cloud sync folder
+     - Google Drive: `~/Google Drive/My Drive/Viwoods/`
+     - OneDrive: `~/OneDrive/Viwoods/` (macOS) or `C:\Users\<user>\OneDrive\Viwoods\` (Windows)
+     - Dropbox: `~/Dropbox/Apps/Viwoods/`
+   - **Enable auto-sync**: ON
+   - **Polling interval**: 1-5 minutes
+
+### Platform Support
+
+| Platform | Auto-Sync | Viewing |
+|----------|-----------|---------|
+| **Windows/macOS/Linux** | Full support | Full |
+| **iOS/Android** | N/A | View imported notes |
+
+### Troubleshooting Cloud Sync
+
+- **Sync delays**: Google Drive desktop may take 30-60 seconds to sync files after Viwoods export
+- **Path issues**: Use absolute paths (e.g., `/Users/...` on macOS, `C:\Users\...` on Windows)
+- **Permissions**: Ensure Obsidian has read access to the cloud sync folder
+- **Network issues**: Auto-sync requires internet connection for cloud providers to sync locally
+
 ## Documentation
 
 - [Architecture](docs/architecture.md) - Plugin architecture and data structures
