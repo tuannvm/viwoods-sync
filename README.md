@@ -1,12 +1,12 @@
-# Viwoods Sync
+# Viwoods Obsidian
 
 [![CI Status](https://img.shields.io/github/actions/workflow/status/tuannvm/viwoods-obsidian/ci?branch=main&logo=github-actions&logoColor=white)](https://github.com/tuannvm/viwoods-obsidian/actions/workflows/ci.yml)
 [![Latest Release](https://img.shields.io/github/v/release/tuannvm/viwoods-obsidian?display_name=tag&logo=Dropbox&logoColor=white&color=blue)](https://github.com/tuannvm/viwoods-obsidian/releases/latest)
-[![License: 0BSD](https://img.shields.io/github/license/tuannvm/viwoods-obsidian?color=green&logo=gitbook&logoColor=white)](LICENSE)
+[![License: MIT](https://img.shields.io/github/license/tuannvm/viwoods-obsidian?color=blue&logo=gitbook&logoColor=white)](LICENSE)
 [![Obsidian Compatible](https://img.shields.io/badge/Obsidian-Compatible-%23483699?logo=obsidian&logoColor=white)](https://obsidian.md)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=TypeScript&logoColor=white)](https://www.typescriptlang.org/)
 
-An Obsidian plugin for importing and syncing Viwoods `.note` files with full support for handwritten strokes (SVG), audio recordings, and automatic folder watching for real-time sync.
+An Obsidian plugin that syncs Viwoods `.note` files into your vault. Converts handwritten strokes to SVG, extracts audio recordings, and includes auto-sync for real-time updates.
 
 ## Features
 
@@ -57,29 +57,34 @@ To check for updates: run **"BRAT: Check for updates to all beta plugins"** in t
 
 ### Usage
 
-Open the command palette (Ctrl/Cmd+P) and run:
-- `Import Viwoods note` - Import a single `.note` file
-- `Reset book hashes` - Reset import tracking
+**Two ways to import notes:**
+
+1. **Drag & Drop** - Drop individual `.note` files anywhere into Obsidian
+2. **Auto-Sync** - Enable in settings to automatically watch a folder for changes
 
 ## Configuration
 
-Configure sync behavior in **Settings → Viwoods Sync**:
+Configure sync behavior in **Settings → Viwoods Obsidian**:
 
 ### Basic Settings
-- **Notes folder** - Where imported markdown files are stored
-- **Include metadata** - Add YAML frontmatter with timestamps and book info
-- **Include timestamps** - Add creation/modification dates to notes
-
-### Output Format
-- **Format** - Choose between PNG images, SVG strokes, or both
-- **Background color** - Set background for generated images/SVG
+| Setting | Description |
+|---------|-------------|
+| **Source folder** | Path to folder containing your Viwoods `.note` files (outside the vault) |
+| **Destination folder** | Root folder for imported notes in your vault |
+| **Include metadata** | Add frontmatter metadata to notes (YAML frontmatter with timestamps and book info) |
 
 ### Auto-Sync (Desktop Only)
-- **Enable auto-sync** - Watch Viwoods export folder for changes
-- **Source folder path** - Path to Viwoods notes export directory
-- **Polling interval** - How often to check for changes (1-60 minutes)
-- **Sync on startup** - Automatically check for changes when Obsidian opens
-- **Show notifications** - Display notices when changes are detected
+| Setting | Description |
+|---------|-------------|
+| **Enable auto-sync** | Automatically watch the source folder for changes |
+| **Polling interval** | How often to check for changes (1-60 minutes) |
+| **Sync on startup** | Check for changes when Obsidian starts |
+| **Show notifications** | Show notifications when changes are detected |
+
+### Debug
+| Setting | Description |
+|---------|-------------|
+| **Enable debug logging** | Enable debug logging to console (for troubleshooting) |
 
 > **Note:** Auto-sync requires desktop Obsidian. Imported notes can be viewed on any platform (desktop/mobile).
 
@@ -180,4 +185,4 @@ This project is a fork of the original [viwoods-import-notes](https://github.com
 
 ## License
 
-BSD Zero Clause License (0BSD)
+MIT License
