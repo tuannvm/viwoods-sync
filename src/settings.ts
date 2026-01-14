@@ -27,13 +27,46 @@ export class ViwoodsSettingTab extends PluginSettingTab {
         // ========================================================================
 
         new Setting(containerEl)
-            .setName('Source folder (remote location)')
-            .setDesc('Path to folder containing your Viwoods .note files (outside the vault)')
+            .setName('Source folder (fallback)')
+            .setDesc('Used when a platform-specific path is not set or on mobile')
             .addText(text => text
                 .setPlaceholder('/Users/username/Documents/Viwoods')
                 .setValue(this.plugin.settings.sourceFolderPath)
                 .onChange(async (value) => {
                     this.plugin.settings.sourceFolderPath = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Source folder (Windows)')
+            .setDesc('Used on Windows desktop when set')
+            .addText(text => text
+                .setPlaceholder('C:\\Users\\username\\Documents\\Viwoods')
+                .setValue(this.plugin.settings.sourceFolderPathWindows)
+                .onChange(async (value) => {
+                    this.plugin.settings.sourceFolderPathWindows = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Source folder (macOS)')
+            .setDesc('Used on macOS desktop when set')
+            .addText(text => text
+                .setPlaceholder('/Users/username/Documents/Viwoods')
+                .setValue(this.plugin.settings.sourceFolderPathMacos)
+                .onChange(async (value) => {
+                    this.plugin.settings.sourceFolderPathMacos = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Source folder (Linux)')
+            .setDesc('Used on Linux desktop when set')
+            .addText(text => text
+                .setPlaceholder('/home/username/Documents/Viwoods')
+                .setValue(this.plugin.settings.sourceFolderPathLinux)
+                .onChange(async (value) => {
+                    this.plugin.settings.sourceFolderPathLinux = value;
                     await this.plugin.saveSettings();
                 }));
 
@@ -69,7 +102,13 @@ export class ViwoodsSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.enableAutoSync)
                 .onChange(async (value) => {
                     this.plugin.settings.enableAutoSync = value;
-                    if (value && !this.plugin.settings.sourceFolderPath) {
+                    const hasAnySourcePath = Boolean(
+                        this.plugin.settings.sourceFolderPath ||
+                        this.plugin.settings.sourceFolderPathWindows ||
+                        this.plugin.settings.sourceFolderPathMacos ||
+                        this.plugin.settings.sourceFolderPathLinux
+                    );
+                    if (value && !hasAnySourcePath) {
                         new Notice('Please set a source folder first');
                     }
                     if (value) {

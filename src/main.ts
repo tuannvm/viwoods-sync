@@ -38,6 +38,7 @@ import { registerCommands } from './commands/registry.js';
 import { loadJSZip, loadJsPDF } from './utils/external-libs.js';
 import { initPenMappings, getPenMappings } from './utils/pen-mapping-helpers.js';
 import { setDebugMode } from './utils/logger.js';
+import { resolveSourceFolderPath } from './utils/platform.js';
 
 // ============================================================================
 // MAIN PLUGIN CLASS
@@ -100,6 +101,10 @@ export default class ViwoodsImporterPlugin extends Plugin {
             // Initialize auto-sync
             await this.initAutoSync();
 
+            if (this.settings.enableAutoSync) {
+                this.updateSyncStatusBar();
+            }
+
             // Register auto-sync commands
             this.registerSyncCommands();
         } catch (error: unknown) {
@@ -161,7 +166,7 @@ export default class ViwoodsImporterPlugin extends Plugin {
         await this.autoSyncService.loadState();
         this.statusBarItem = this.addStatusBarItem();
         this.updateSyncStatusBar();
-        if (this.settings.enableAutoSync && this.settings.sourceFolderPath) {
+        if (this.settings.enableAutoSync) {
             await this.autoSyncService.start();
             if (this.settings.syncOnStartup) {
                 // Use setTimeout directly for initial scan, not registerInterval
@@ -200,7 +205,8 @@ export default class ViwoodsImporterPlugin extends Plugin {
             id: 'viwoods-scan-folder',
             name: 'Scan Viwoods folder for changes',
             checkCallback: (checking) => {
-                if (this.settings.enableAutoSync && this.settings.sourceFolderPath) {
+                const sourceFolderPath = resolveSourceFolderPath(this.settings);
+                if (this.settings.enableAutoSync && sourceFolderPath) {
                     if (!checking) this.autoSyncService?.scanForChanges();
                     return true;
                 }
@@ -235,7 +241,7 @@ export default class ViwoodsImporterPlugin extends Plugin {
                     this.settings.enableAutoSync = !this.settings.enableAutoSync;
                     this.saveSettings();
                     if (this.settings.enableAutoSync) {
-                        if (!this.settings.sourceFolderPath) {
+                        if (!resolveSourceFolderPath(this.settings)) {
                             new Notice('Please set a source folder in settings first');
                             this.settings.enableAutoSync = false;
                             this.saveSettings();
@@ -258,7 +264,8 @@ export default class ViwoodsImporterPlugin extends Plugin {
             callback: () => {
                 const pendingCount = this.autoSyncService?.getPendingChangesCount() || 0;
                 const lastScan = this.autoSyncService?.getLastScanTime() || 0;
-                let message = `Viwoods Auto-Sync\n\nSource: ${this.settings.sourceFolderPath || 'Not set'}\n`;
+                const sourceFolderPath = resolveSourceFolderPath(this.settings);
+                let message = `Viwoods Auto-Sync\n\nSource: ${sourceFolderPath || 'Not set'}\n`;
                 message += `Status: ${this.settings.enableAutoSync ? 'Enabled' : 'Disabled'}\n`;
                 message += `Pending: ${pendingCount}\n`;
                 message += `Last scan: ${lastScan ? new Date(lastScan).toLocaleString() : 'Never'}`;
@@ -301,7 +308,7 @@ export default class ViwoodsImporterPlugin extends Plugin {
     }
 
     async startAutoSync(): Promise<void> {
-        if (!this.settings.sourceFolderPath) {
+        if (!resolveSourceFolderPath(this.settings)) {
             new Notice('Please set a source folder first');
             return;
         }

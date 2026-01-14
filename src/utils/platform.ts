@@ -1,17 +1,71 @@
 // utils/platform.ts - Platform detection utilities for Viwoods Obsidian
 
+import type { ViwoodsSettings } from '../types.js';
+
 /**
  * Get the current platform type
  * @returns 'desktop' for Electron-based Obsidian, 'mobile' for Capacitor-based
  */
 export function getPlatform(): 'desktop' | 'mobile' {
-    const userAgent = navigator.userAgent;
+    const userAgent = typeof navigator === 'undefined' ? '' : navigator.userAgent;
     // Obsidian Desktop uses Electron
     if (userAgent.includes('Electron')) {
         return 'desktop';
     }
     // Obsidian Mobile uses Capacitor
     return 'mobile';
+}
+
+/**
+ * Get desktop OS platform when available
+ * @returns 'windows' | 'macos' | 'linux' | 'unknown'
+ */
+export function getDesktopOS(): 'windows' | 'macos' | 'linux' | 'unknown' {
+    if (getPlatform() !== 'desktop') {
+        return 'unknown';
+    }
+
+    try {
+        const platform = (globalThis as { process?: { platform?: string } }).process?.platform;
+        if (typeof platform === 'string') {
+            switch (platform) {
+                case 'win32':
+                    return 'windows';
+                case 'darwin':
+                    return 'macos';
+                case 'linux':
+                    return 'linux';
+                default:
+                    return 'unknown';
+            }
+        }
+    } catch {
+        return 'unknown';
+    }
+
+    return 'unknown';
+}
+
+/**
+ * Resolve the effective source folder path based on platform.
+ */
+export function resolveSourceFolderPath(settings: ViwoodsSettings): string {
+    const fallback = settings.sourceFolderPath?.trim();
+    const platform = getDesktopOS();
+
+    if (platform === 'windows') {
+        return settings.sourceFolderPathWindows?.trim() || fallback || '';
+    }
+
+    if (platform === 'macos') {
+        return settings.sourceFolderPathMacos?.trim() || fallback || '';
+    }
+
+    if (platform === 'linux') {
+        return settings.sourceFolderPathLinux?.trim() || fallback || '';
+    }
+
+    return fallback || '';
 }
 
 /**

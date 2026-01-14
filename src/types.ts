@@ -77,9 +77,12 @@ export interface ViwoodsSettings {
     outputFormat: 'png' | 'svg' | 'both';
     backgroundColor: string;
 
-    // Auto-sync settings (5)
+    // Auto-sync settings (8)
     enableAutoSync: boolean;
     sourceFolderPath: string;
+    sourceFolderPathWindows: string;
+    sourceFolderPathMacos: string;
+    sourceFolderPathLinux: string;
     pollingIntervalMinutes: number;
     showSyncNotifications: boolean;
     syncOnStartup: boolean;

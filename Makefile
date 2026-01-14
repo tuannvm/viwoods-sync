@@ -1,7 +1,7 @@
 # Makefile for Viwoods Obsidian Plugin
 # Based on tuannvm/codex-mcp-server Makefile structure
 
-.PHONY: help dev build build-check lint format check test test-ui test-coverage test-watch clean install version typecheck ci release-check show-version status
+.PHONY: help dev build build-check lint format check test test-ui test-coverage test-watch clean install version typecheck ci release-check show-version status try
 
 # Default target
 help:
@@ -34,6 +34,7 @@ help:
 	@echo "  make release-check - Verify ready for release"
 	@echo "  make show-version  - Show current version"
 	@echo "  make status        - Show git status"
+	@echo "  make try           - Build and copy to ~/.obsidian"
 
 # ============================================================================
 # Development
@@ -137,3 +138,10 @@ show-version:
 status:
 	@echo "Git status:"
 	@git status --short
+
+# Quick local test in Obsidian
+try: build
+	@echo "Copying plugin files to ~/.obsidian/.obsidian/plugins/viwoods-obsidian/"
+	@mkdir -p ~/.obsidian/.obsidian/plugins/viwoods-obsidian
+	@cp main.js manifest.json styles.css ~/.obsidian/.obsidian/plugins/viwoods-obsidian/
+	@echo "Done. Reload the plugin in Obsidian."

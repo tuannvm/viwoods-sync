@@ -15,6 +15,9 @@ export const DEFAULT_SETTINGS: ViwoodsSettings = {
     // Auto-sync settings
     enableAutoSync: false,
     sourceFolderPath: '',
+    sourceFolderPathWindows: '',
+    sourceFolderPathMacos: '',
+    sourceFolderPathLinux: '',
     pollingIntervalMinutes: 5,
     showSyncNotifications: true,
     syncOnStartup: false,

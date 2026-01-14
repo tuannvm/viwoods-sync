@@ -2,6 +2,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { DEFAULT_SETTINGS } from '../src/utils/constants.js';
+import { resolveSourceFolderPath } from '../src/utils/platform.js';
 
 describe('Constants', () => {
 	describe('DEFAULT_SETTINGS', () => {
@@ -14,6 +15,9 @@ describe('Constants', () => {
 			expect(DEFAULT_SETTINGS).toHaveProperty('backgroundColor');
 			expect(DEFAULT_SETTINGS).toHaveProperty('enableAutoSync');
 			expect(DEFAULT_SETTINGS).toHaveProperty('sourceFolderPath');
+			expect(DEFAULT_SETTINGS).toHaveProperty('sourceFolderPathWindows');
+			expect(DEFAULT_SETTINGS).toHaveProperty('sourceFolderPathMacos');
+			expect(DEFAULT_SETTINGS).toHaveProperty('sourceFolderPathLinux');
 			expect(DEFAULT_SETTINGS).toHaveProperty('pollingIntervalMinutes');
 			expect(DEFAULT_SETTINGS).toHaveProperty('showSyncNotifications');
 			expect(DEFAULT_SETTINGS).toHaveProperty('syncOnStartup');
@@ -28,6 +32,9 @@ describe('Constants', () => {
 			expect(DEFAULT_SETTINGS.backgroundColor).toBe('#FFFFFF');
 			expect(DEFAULT_SETTINGS.enableAutoSync).toBe(false);
 			expect(DEFAULT_SETTINGS.sourceFolderPath).toBe('');
+			expect(DEFAULT_SETTINGS.sourceFolderPathWindows).toBe('');
+			expect(DEFAULT_SETTINGS.sourceFolderPathMacos).toBe('');
+			expect(DEFAULT_SETTINGS.sourceFolderPathLinux).toBe('');
 			expect(DEFAULT_SETTINGS.pollingIntervalMinutes).toBe(5);
 			expect(DEFAULT_SETTINGS.showSyncNotifications).toBe(true);
 			expect(DEFAULT_SETTINGS.syncOnStartup).toBe(false);
@@ -43,6 +50,23 @@ describe('Constants', () => {
 			expect(DEFAULT_SETTINGS.pollingIntervalMinutes).toBeGreaterThanOrEqual(1);
 			expect(DEFAULT_SETTINGS.pollingIntervalMinutes).toBeLessThanOrEqual(60);
 		});
+	});
+});
+
+describe('Platform Utility', () => {
+	it('should resolve fallback source folder path', () => {
+		const settings = {
+			...DEFAULT_SETTINGS,
+			sourceFolderPath: '/fallback/path',
+			sourceFolderPathWindows: 'C:\\Viwoods',
+			sourceFolderPathMacos: '/Users/test/Viwoods',
+			sourceFolderPathLinux: '/home/test/Viwoods'
+		};
+
+		// In test environment (node), navigator is undefined so platform resolves to mobile/unknown.
+		// The resolver should fall back to the generic path.
+		const resolved = resolveSourceFolderPath(settings);
+		expect(resolved).toBe('/fallback/path');
 	});
 });
 
