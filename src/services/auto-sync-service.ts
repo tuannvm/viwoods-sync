@@ -9,6 +9,7 @@ import type {
 import { ExternalFileAccess, ExternalFileInfo } from '../utils/external-file-access.js';
 import { WATCHER_STATE_FILE } from '../utils/constants.js';
 import { log } from '../utils/logger.js';
+import { resolveSourceFolderPath } from '../utils/platform.js';
 
 // Forward declaration to avoid circular dependency
 export interface IImportWorkflow {
@@ -74,20 +75,21 @@ export class AutoSyncService {
             return;
         }
 
-        if (!this.settings.sourceFolderPath) {
+        const sourceFolderPath = resolveSourceFolderPath(this.settings);
+        if (!sourceFolderPath) {
             new Notice('Please set a source folder first');
             return;
         }
 
         // Validate the source folder
-        const isValid = await this.fileAccess.validatePath(this.settings.sourceFolderPath);
+        const isValid = await this.fileAccess.validatePath(sourceFolderPath);
         if (!isValid) {
-            new Notice(`Source folder not accessible: ${this.settings.sourceFolderPath}`);
+            new Notice(`Source folder not accessible: ${sourceFolderPath}`);
             return;
         }
 
         this.isEnabled = true;
-        this.state.sourceFolder = this.settings.sourceFolderPath;
+        this.state.sourceFolder = sourceFolderPath;
         this.state.isEnabled = true;
 
         // Start polling
@@ -160,15 +162,16 @@ export class AutoSyncService {
      * @returns Array of detected changes
      */
     async scanForChanges(): Promise<DetectedChange[]> {
-        if (!this.settings.sourceFolderPath) {
+        const sourceFolderPath = resolveSourceFolderPath(this.settings);
+        if (!sourceFolderPath) {
             return [];
         }
 
-        log.debug(`Scanning source folder: ${this.settings.sourceFolderPath}`);
+        log.debug(`Scanning source folder: ${sourceFolderPath}`);
 
         try {
             // Scan directory
-            const files = await this.fileAccess.scanDirectory(this.settings.sourceFolderPath);
+            const files = await this.fileAccess.scanDirectory(sourceFolderPath);
             log.debug(`Found ${files.length} .note files`);
 
             // Detect changes
