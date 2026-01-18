@@ -141,7 +141,7 @@ status:
 
 # Quick local test in Obsidian
 try: build
-	@echo "Copying plugin files to ~/.obsidian/.obsidian/plugins/viwoods-obsidian/"
-	@mkdir -p ~/.obsidian/.obsidian/plugins/viwoods-obsidian
-	@cp main.js manifest.json styles.css ~/.obsidian/.obsidian/plugins/viwoods-obsidian/
+	@echo "Copying plugin files to ~/.obsidian/.obsidian/plugins/viwoods-sync/"
+	@mkdir -p ~/.obsidian/.obsidian/plugins/viwoods-sync
+	@cp main.js manifest.json styles.css ~/.obsidian/.obsidian/plugins/viwoods-sync/
 	@echo "Done. Reload the plugin in Obsidian."
