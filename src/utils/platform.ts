@@ -4,7 +4,6 @@ import { Platform } from 'obsidian';
 import type { ViwoodsSettings } from '../types.js';
 
 // Dynamically import Node.js modules (desktop only)
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 let nodeModules: { fs: typeof import('fs'); path: typeof import('path') } | null = null;
 let nodeModulesLoaded = false;
 
@@ -114,9 +113,7 @@ export function getNodeModules(): { fs: typeof import('fs'); path: typeof import
     nodeModulesLoaded = true;
 
     try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const fs = require('fs');
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const path = require('path');
         nodeModules = { fs, path };
         return nodeModules;

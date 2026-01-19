@@ -145,13 +145,14 @@ export class ViewerService {
         setCssProps(toggleIcon, { 'color': 'var(--text-muted)' });
 
         const contentWrapper = container.createDiv();
-        contentWrapper.style.display = this.settings.showSvgViewer ? 'block' : 'none';
+        let isVisible = this.settings.showSvgViewer;
+        setCssProps(contentWrapper, { 'display': isVisible ? 'block' : 'none' });
 
         header.addEventListener('click', () => {
-            const isVisible = contentWrapper.style.display === 'block';
-            contentWrapper.style.display = isVisible ? 'none' : 'block';
-            toggleIcon.textContent = isVisible ? '▶' : '▼';
-            this.settings.showSvgViewer = !isVisible;
+            isVisible = !isVisible;
+            setCssProps(contentWrapper, { 'display': isVisible ? 'block' : 'none' });
+            toggleIcon.textContent = isVisible ? '▼' : '▶';
+            this.settings.showSvgViewer = isVisible;
         });
 
         const controls = contentWrapper.createDiv();
