@@ -32,6 +32,9 @@ export default tseslint.config(
 				extraFileExtensions: ['.json']
 			},
 		},
+		plugins: {
+			obsidianmd: obsidianmd,
+		},
 	},
 	...obsidianmd.configs.recommended,
 	...sdl.configs.recommended,
@@ -49,7 +52,7 @@ export default tseslint.config(
 			"@typescript-eslint/no-non-null-assertion": "off",
 
 			// Obsidian-specific - Be pragmatic
-			"obsidianmd/ui/sentence-case": "off",
+			"obsidianmd/ui/sentence-case": "error",  // Temporarily enabled to verify plugin review fixes
 			"obsidianmd/no-static-styles-assignment": "off",
 			"obsidianmd/settings-tab/no-manual-html-headings": "off",
 			"obsidianmd/platform": "off",
