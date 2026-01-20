@@ -325,7 +325,7 @@ export class ViewerService {
         const exportPDF = async () => {
             try {
                 if (!window.jspdf) {
-                    new Notice('jsPDF library not loaded');
+                    new Notice('PDF library not loaded.');
                     return;
                 }
 

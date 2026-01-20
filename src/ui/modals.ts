@@ -490,7 +490,7 @@ export class ExportModal extends Modal {
 
     onOpen() {
         const { contentEl } = this;
-        contentEl.createEl('h2', { text: 'Export Viwoods notes' });
+        contentEl.createEl('h2', { text: 'Export notes' });
         contentEl.createEl('p', { text: 'Select a book and export format. This will create a package with all pages and media.' });
 
         const bookSelect = contentEl.createEl('select', { cls: 'dropdown' });
@@ -529,7 +529,7 @@ export class ExportModal extends Modal {
         includeGeminiCheck.checked = true;
         const includeGeminiLabel = optionsDiv.createEl('label');
         includeGeminiLabel.setAttribute('for', 'include-gemini');
-        includeGeminiLabel.textContent = ' Include Gemini transcription';
+        includeGeminiLabel.textContent = ' Include AI transcription';
 
         const buttonDiv = contentEl.createDiv();
         setCssProps(buttonDiv, {
@@ -585,7 +585,7 @@ export class ImportModal extends Modal {
 
     onOpen() {
         const { contentEl } = this;
-        contentEl.createEl('h2', { text: 'Import Viwoods notes' });
+        contentEl.createEl('h2', { text: 'Import notes' });
         contentEl.createEl('p', { text: 'Select .note files to import. Each file may contain multiple pages that will be organized into a book structure.' });
 
         const recentDiv = contentEl.createDiv();
