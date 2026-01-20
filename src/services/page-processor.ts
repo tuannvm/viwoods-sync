@@ -8,7 +8,7 @@ import type {
     ViwoodsSettings,
     PageData
 } from '../types.js';
-import { formatDate, ensureFolder } from '../utils/file-utils.js';
+import { ensureFolder } from '../utils/file-utils.js';
 import { processImageWithBackground } from '../utils/image-utils.js';
 import { strokesToSVG } from '../utils/svg-generator.js';
 import { log } from '../utils/logger.js';

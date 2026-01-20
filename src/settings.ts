@@ -178,11 +178,11 @@ export class ViwoodsSettingTab extends PluginSettingTab {
         // OCR Settings (macOS only)
         // ========================================================================
 
-        containerEl.createEl('h3', { text: 'OCR Settings' });
+        containerEl.createEl('h3', { text: 'OCR settings' });
 
         new Setting(containerEl)
             .setName('Enable OCR')
-            .setDesc('Extract text from handwritten notes using Apple Vision Framework (macOS desktop; requires Swift/Xcode Command Line Tools)')
+            .setDesc('Extract text from handwritten notes using Apple Vision framework (macOS desktop; requires Swift/Xcode command line tools)')
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.enableOcr)
                 .onChange(async (value) => {
@@ -191,8 +191,8 @@ export class ViwoodsSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('OCR Languages')
-            .setDesc('Comma-separated language codes for OCR (e.g., en-US, zh-Hans)')
+            .setName('OCR languages')
+            .setDesc('Language codes for OCR')
             .addText(text => text
                 .setPlaceholder('en-US')
                 .setValue(this.plugin.settings.ocrLanguages.join(','))
@@ -208,7 +208,7 @@ export class ViwoodsSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('OCR Confidence Threshold')
+            .setName('OCR confidence threshold')
             .setDesc('Minimum confidence level for OCR results (0.0 to 1.0)')
             .addSlider(slider => slider
                 .setLimits(0, 1, 0.05)
